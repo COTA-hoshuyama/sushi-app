@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水産寿司 製造計画システム（既存スプレッドシート直結版）</title>
+<style>
+  :root {
+    --primary: #1e3a8a;
+    --primary-light: #eff6ff;
+    --accent: #059669;
+    --border: #cbd5e1;
+    --text: #1e293b;
+    --text-muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif; }
+  body { background: #f8fafc; color: var(--text); padding: 16px; font-size: 13px; }
+  .container { max-width: 1460px; margin: 0 auto; }
+  header { margin-bottom: 12px; }
+  h1 { font-size: 20px; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
+  /* 既存シート直結バー */
+  .sync-bar { background: #eff6ff; border: 2px solid #93c5fd; border-radius: 8px; padding: 10px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .sync-inputs { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 320px; }
+  .sync-inputs input[type="text"] { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
+  .btn-sync { background: var(--primary); color: white; border: none; padding: 7px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+  .btn-sync:hover { background: #1e40af; }
+  #syncStatus { font-weight: 700; font-size: 12px; }
+
+  .top-tools { display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; margin-bottom: 16px; }
+  @media(max-width: 1024px) { .top-tools { grid-template-columns: 1fr; } }
+  
+  .tool-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .box-title { font-weight: 700; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  
+  .range-box { background: #f0fdf4; border-color: #86efac; }
+  .range-inputs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .range-inputs input[type="date"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .btn-calc-range { background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+  .btn-calc-range:hover { background: #047857; }
+
+  .daily-bar { background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  .daily-row-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+  
+  .daily-inputs { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: #fffbe0; padding: 16px 24px; border-radius: 12px; border: 3px solid #fde047; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  .daily-inputs label { font-weight: 900; color: #854d0e; font-size: 24px; }
+  .daily-inputs input[type="date"] { padding: 12px 20px; border: 4px solid var(--primary); border-radius: 12px; font-size: 36px; font-weight: 900; color: var(--primary); background: #eff6ff; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
+  #dateStatus { font-size: 18px; font-weight: 800; margin-left: 8px; padding: 6px 12px; border-radius: 8px; }
+  
+  .daily-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn-save { background: #059669; color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 900; border: none; cursor: pointer; }
+  .btn-save:hover { background: #047857; }
+  .btn-copy-prev { background: #4338ca; color: white; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 800; border: none; cursor: pointer; }
+  .btn-copy-prev:hover { background: #3730a3; }
+  .btn-copy-to { background: #0284c7; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; }
+  .btn-del-plan { background: #fee2e2; color: #dc2626; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 800; border: 1px solid #fca5a5; cursor: pointer; }
+
+  .copy-bar { display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px dashed var(--border); flex-wrap: wrap; }
+  .copy-bar label { font-size: 13px; font-weight: 700; color: #475569; }
+
+  .saved-select-bar { display: flex; align-items: center; gap: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 14px; flex-wrap: wrap; }
+  .saved-select-bar label { font-size: 13px; font-weight: 800; color: #166534; }
+  .saved-select-bar select { padding: 6px 14px; border: 2px solid var(--accent); border-radius: 6px; font-size: 14px; font-weight: 800; color: #166534; background: white; cursor: pointer; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .card { background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .card-title { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+  .card-val { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--primary); }
+  .card-val.profit { color: var(--accent); }
+
+  .layout { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+  @media(max-width: 1024px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: white; border-radius: 8px; border: 1px solid var(--border); padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .panel-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+
+  .add-box { display: flex; gap: 8px; margin-bottom: 14px; background: var(--primary-light); padding: 10px; border-radius: 6px; flex-wrap: wrap; align-items: center; }
+  .add-box select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 600; background: white; }
+  #categorySelect { width: 170px; }
+  #productSelect { flex: 1; min-width: 280px; }
+  button { cursor: pointer; border: none; border-radius: 6px; font-weight: 700; }
+  .btn-add { background: var(--primary); color: white; padding: 7px 16px; font-size: 13px; }
+  .btn-add:hover { background: #172554; }
+  .btn-del { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+  .btn-recipe-view { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+  .btn-tool { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; margin-left: 4px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #f8fafc; padding: 8px 6px; font-size: 11px; font-weight: 700; color: #475569; border-bottom: 2px solid var(--border); text-align: left; }
+  td { padding: 8px 6px; border-bottom: 1px solid #e2e8f0; font-size: 12px; vertical-align: middle; }
+  
+  .cat-header-row th { background: #e2e8f0; color: #1e3a8a; font-size: 12px; font-weight: 800; padding: 6px 8px; }
+  .sup-header-row th { background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: 800; padding: 7px 10px; }
+
+  input[type="number"] { width: 100%; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; text-align: right; font-size: 13px; font-weight: 700; }
+  input[type="number"]:focus { outline: none; border-color: var(--primary); background: #f0fdf4; }
+
+  .rate-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+  .rate-good { background: #dcfce7; color: #166534; }
+  .rate-mid { background: #fef9c3; color: #854d0e; }
+  .rate-low { background: #fee2e2; color: #991b1b; }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-content { background: white; border-radius: 10px; width: 90%; max-width: 1050px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+  .modal-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+  .modal-title { font-size: 16px; font-weight: 800; color: var(--primary); }
+  .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; }
+  .btn-close { background: #64748b; color: white; padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🍣 水産寿司 製造計画システム（既存スプレッドシート直結版）</h1>
+  </header>
+
+  <!-- Googleスプレッドシート連携バー -->
+  <div class="sync-bar">
+    <div class="sync-inputs">
+      <label style="font-weight:700; color:#1e3a8a;">🔗 スプレッドシートAPI URL:</label>
+      <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+      <button class="btn-sync" onclick="saveAndSyncApi()">💾 保存・今すぐ同期</button>
+    </div>
+    <div id="syncStatus" style="color:#0369a1;">● 内蔵マスターで稼働中</div>
+  </div>
+
+  <div class="top-tools">
+    <div class="tool-box">
+      <div class="box-title">📲 端末間の計画データ受け渡し</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-tool" style="background:#0284c7; color:white; border:none; padding:6px 12px;" onclick="exportAllPlans()">📤 全計画データ出力(JSON)</button>
+        <button class="btn-tool" style="border:1px solid #0284c7; color:#0284c7; padding:5px 12px;" onclick="document.getElementById('importFileInput').click()">📥 計画データ読込</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAllPlans(event)">
+      </div>
+    </div>
+
+    <div class="tool-box range-box">
+      <div class="box-title" style="color:#166534;">📦 指定期間の材料発注数 集計（発注先順）</div>
+      <div class="range-inputs">
+        <label style="font-weight:700;">期間:</label>
+        <input type="date" id="rangeStart">
+        <span>〜</span>
+        <input type="date" id="rangeEnd">
+        <button class="btn-calc-range" onclick="calculateRangeOrders()">📊 発注数を確認する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="daily-bar">
+    <div class="daily-row-top">
+      <div class="daily-inputs">
+        <label>📅 計画対象日:</label>
+        <input type="date" id="planDate" onchange="onDateChanged()">
+        <span id="dateStatus" style="font-size: 18px; color: var(--text-muted); font-weight: 800;"></span>
+      </div>
+      <div class="daily-btns">
+        <button class="btn-save" onclick="savePlanForDate()">💾 現在の計画を保存</button>
+        <button class="btn-copy-prev" onclick="copyFromPreviousDay()">⏪ 前日の計画をコピー</button>
+        <button class="btn-del-plan" onclick="deletePlanForDate()">🗑️ この日の計画を削除</button>
+      </div>
+    </div>
+
+    <div class="copy-bar">
+      <label>📋 計画書の複製・コピー:</label>
+      <label>別の日から複製:</label>
+      <select id="copySourceSelect" style="max-width:140px; padding:5px; font-size:12px;"></select>
+      <button class="btn-tool" onclick="copyFromSelectedDate()">読込・複製</button>
+      <span style="color:var(--border);">|</span>
+      <label>別の日付へ丸ごとコピー保存:</label>
+      <input type="date" id="copyTargetDate" style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px;">
+      <button class="btn-copy-to" onclick="copyCurrentPlanToTargetDate()">指定日へコピー保存 ⏩</button>
+    </div>
+
+    <div class="saved-select-bar">
+      <label>📂 保存済みの日付から開く:</label>
+      <select id="savedDateSelect" onchange="onSavedDateSelectChange(this.value)">
+        <option value="">-- 保存データなし --</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="card">
+      <div class="card-title">総製造パック数</div>
+      <div class="card-val" id="sumPacks">0 P</div>
+    </div>
+    <div class="card">
+      <div class="card-title">総製造金額 (見込売上)</div>
+      <div class="card-val" id="sumSales">¥0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">総製造原価</div>
+      <div class="card-val" id="sumCost">¥0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">総値入れ高 (粗利)</div>
+      <div class="card-val profit" id="sumMargin">¥0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">平均値入れ率</div>
+      <div class="card-val profit" id="avgMarginRate">0.0%</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">1. 本日の製造品目リスト</div>
+        <div>
+          <button class="btn-tool" onclick="clearPlan()">全クリア</button>
+        </div>
+      </div>
+
+      <div class="add-box">
+        <label style="font-weight:700;">カテゴリー:</label>
+        <select id="categorySelect" onchange="onCategoryChanged()"></select>
+
+        <label style="font-weight:700; margin-left:4px;">商品:</label>
+        <select id="productSelect"></select>
+
+        <button class="btn-add" onclick="addProductFromSelect()">＋ 商品を追加</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>商品名</th>
+            <th style="width: 80px;">製造数(P)</th>
+            <th style="width: 85px;">売価(円)</th>
+            <th style="text-align: right;">製造金額</th>
+            <th style="text-align: right;">値入れ率</th>
+            <th style="width: 85px; text-align: center;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="planBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">2. 本日の必要原材料（材料カテゴリー順）</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>原材料名</th>
+            <th style="text-align: right;">必要総量</th>
+            <th>単位</th>
+            <th style="text-align: right;">材料費小計</th>
+            <th>仕入先</th>
+          </tr>
+        </thead>
+        <tbody id="materialBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="recipeModalTitle">📖 商品仕様マニュアル・レシピ詳細</div>
+      <button style="border:none; background:none; font-size:18px; cursor:pointer;" onclick="closeRecipeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="recipeModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-close" onclick="closeRecipeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rangeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">📦 期間原材料 発注集計表（発注先順）</div>
+      <button style="border:none; background:none; font-size:18px; cursor:pointer;" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalSummaryText" style="margin-bottom:12px; font-weight:700; color:#334155;"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>原材料名</th>
+            <th style="text-align: right;">必要使用量</th>
+            <th>単位</th>
+            <th>仕入ロット規格</th>
+            <th style="text-align: right; color:#059669;">必要発注数(ロット)</th>
+            <th style="text-align: right;">発注金額見込</th>
+            <th>材料区分</th>
+          </tr>
+        </thead>
+        <tbody id="modalTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-close" onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRODUCT_CATEGORIES = ["予約商品", "盛り合わせ", "単品", "巻寿司", "ちらし", "押し寿司・その他", "うなぎ"];
+const MATERIAL_CATEGORY_ORDER = ["シャリ", "ねた（手切り分）", "にぎりねた", "魚介系材料", "巻用", "海苔", "野菜", "調味料", "その他", "別途製造分"];
+const SUPPLIER_ORDER = ["北九炊飯", "クラレイ", "ゼネック", "EOS", "市場", "資材", "その他", "別途製造分"];
+
+// 内蔵ベース原材料マスター（スプレッドシート未接続時やオフライン時も100%完全動作）
+let materials = {
+  "酢飯": { cat: "シャリ", unit: "g", price: 0.49, lotQty: 1000, lotPrice: 490, lotSpec: "1000g/P", supplier: "北九炊飯" },
+  "白飯": { cat: "シャリ", unit: "g", price: 0.48, lotQty: 1000, lotPrice: 480, lotSpec: "1000g/P", supplier: "北九炊飯" },
+  "シャリ玉": { cat: "シャリ", unit: "個", price: 14.0, lotQty: 55, lotPrice: 770, lotSpec: "55個/箱", supplier: "北九炊飯" },
+  "赤酢シャリ玉": { cat: "シャリ", unit: "個", price: 14.4, lotQty: 55, lotPrice: 792, lotSpec: "55個/箱", supplier: "北九炊飯" },
+  "茶飯（国産ブレンド米）": { cat: "シャリ", unit: "g", price: 0.48, lotQty: 1000, lotPrice: 480, lotSpec: "1000g/P", supplier: "北九炊飯" },
+  "稲荷寿司（ごま入り）": { cat: "シャリ", unit: "個", price: 36.0, lotQty: 1, lotPrice: 36, lotSpec: "1個", supplier: "北九炊飯" },
+  "大トロ": { cat: "ねた（手切り分）", unit: "枚", price: 135.0, lotQty: 10, lotPrice: 1350, lotSpec: "10枚/P", supplier: "クラレイ" },
+  "中トロ": { cat: "ねた（手切り分）", unit: "枚", price: 125.0, lotQty: 10, lotPrice: 1250, lotSpec: "10枚/P", supplier: "クラレイ" },
+  "バチマグロ": { cat: "ねた（手切り分）", unit: "枚", price: 46.154, lotQty: 260, lotPrice: 12000, lotSpec: "260枚/P", supplier: "ゼネック" },
+  "生マグロ": { cat: "ねた（手切り分）", unit: "枚", price: 75.0, lotQty: 1, lotPrice: 75, lotSpec: "1枚", supplier: "市場" },
+  "タイ": { cat: "ねた（手切り分）", unit: "枚", price: 42.0, lotQty: 1, lotPrice: 42, lotSpec: "1枚", supplier: "市場" },
+  "ヒラス": { cat: "ねた（手切り分）", unit: "枚", price: 46.0, lotQty: 1, lotPrice: 46, lotSpec: "1枚", supplier: "市場" },
+  "サーモン": { cat: "ねた（手切り分）", unit: "枚", price: 38.0, lotQty: 1, lotPrice: 38, lotSpec: "1枚", supplier: "市場" },
+  "サーモン芯 200g": { cat: "ねた（手切り分）", unit: "本", price: 500.0, lotQty: 1, lotPrice: 500, lotSpec: "1本", supplier: "その他" },
+  "シマアジ": { cat: "ねた（手切り分）", unit: "枚", price: 80.0, lotQty: 1, lotPrice: 80, lotSpec: "1枚", supplier: "市場" },
+  "ブリ": { cat: "ねた（手切り分）", unit: "枚", price: 42.0, lotQty: 1, lotPrice: 42, lotSpec: "1枚", supplier: "市場" },
+  "トリム": { cat: "ねた（手切り分）", unit: "枚", price: 25.0, lotQty: 1, lotPrice: 25, lotSpec: "1枚", supplier: "その他" },
+  "アジフィーレ": { cat: "ねた（手切り分）", unit: "枚", price: 43.55, lotQty: 20, lotPrice: 871, lotSpec: "20枚/P", supplier: "EOS" },
+  "ネタA": { cat: "ねた（手切り分）", unit: "枚", price: 35.0, lotQty: 1, lotPrice: 35, lotSpec: "1枚", supplier: "市場" },
+  "ネタB": { cat: "ねた（手切り分）", unit: "枚", price: 35.0, lotQty: 1, lotPrice: 35, lotSpec: "1枚", supplier: "市場" },
+  "ネタC": { cat: "ねた（手切り分）", unit: "枚", price: 35.0, lotQty: 1, lotPrice: 35, lotSpec: "1枚", supplier: "市場" },
+  "ネタD": { cat: "ねた（手切り分）", unit: "枚", price: 35.0, lotQty: 1, lotPrice: 35, lotSpec: "1枚", supplier: "市場" },
+  "マグロ芯": { cat: "ねた（手切り分）", unit: "g", price: 3.1, lotQty: 1, lotPrice: 3.1, lotSpec: "1g", supplier: "その他" },
+  "サーモン芯": { cat: "ねた（手切り分）", unit: "g", price: 2.4, lotQty: 1, lotPrice: 2.4, lotSpec: "1g", supplier: "その他" },
+  "タイ芯": { cat: "ねた（手切り分）", unit: "g", price: 4.2, lotQty: 1, lotPrice: 4.2, lotSpec: "1g", supplier: "その他" },
+  "ブリ芯": { cat: "ねた（手切り分）", unit: "g", price: 4.2, lotQty: 1, lotPrice: 4.2, lotSpec: "1g", supplier: "その他" },
+  "ビンチョウ": { cat: "ねた（手切り分）", unit: "g", price: 2.1, lotQty: 1, lotPrice: 2.1, lotSpec: "1g", supplier: "その他" },
+  "トロサーモン": { cat: "ねた（手切り分）", unit: "枚", price: 38.0, lotQty: 1, lotPrice: 38, lotSpec: "1枚", supplier: "その他" },
+  "ブリトロ": { cat: "ねた（手切り分）", unit: "枚", price: 42.0, lotQty: 1, lotPrice: 42, lotSpec: "1枚", supplier: "市場" },
+  "海鮮丼用切り落とし": { cat: "ねた（手切り分）", unit: "g", price: 2.5, lotQty: 1, lotPrice: 2.5, lotSpec: "1g", supplier: "その他" },
+  "ヤリイカ": { cat: "にぎりねた", unit: "枚", price: 21.0, lotQty: 20, lotPrice: 420, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "旨味エビ": { cat: "にぎりねた", unit: "枚", price: 44.0, lotQty: 20, lotPrice: 880, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "ウニ": { cat: "魚介系材料", unit: "g", price: 10.5, lotQty: 100, lotPrice: 1050, lotSpec: "100g/枚", supplier: "クラレイ" },
+  "数の子": { cat: "にぎりねた", unit: "本", price: 76.45, lotQty: 20, lotPrice: 1529, lotSpec: "20本/P", supplier: "クラレイ" },
+  "赤貝": { cat: "にぎりねた", unit: "枚", price: 41.5, lotQty: 10, lotPrice: 415, lotSpec: "10枚/P", supplier: "クラレイ" },
+  "天然ボイル車海老": { cat: "にぎりねた", unit: "尾", price: 81.0, lotQty: 10, lotPrice: 810, lotSpec: "10尾/P", supplier: "クラレイ" },
+  "BTエビ": { cat: "にぎりねた", unit: "尾", price: 53.2, lotQty: 20, lotPrice: 1064, lotSpec: "20尾/P", supplier: "クラレイ" },
+  "ツブ貝": { cat: "にぎりねた", unit: "枚", price: 33.25, lotQty: 20, lotPrice: 665, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "寿司エビ６LH": { cat: "にぎりねた", unit: "尾", price: 32.5, lotQty: 20, lotPrice: 650, lotSpec: "20尾/P", supplier: "クラレイ" },
+  "白トリ貝": { cat: "にぎりねた", unit: "枚", price: 38.8, lotQty: 20, lotPrice: 776, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "石垣貝": { cat: "にぎりねた", unit: "枚", price: 28.0, lotQty: 20, lotPrice: 560, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "有頭エビ": { cat: "にぎりねた", unit: "枚", price: 66.5, lotQty: 10, lotPrice: 665, lotSpec: "10枚/P", supplier: "クラレイ" },
+  "真フグ": { cat: "にぎりねた", unit: "枚", price: 38.8, lotQty: 20, lotPrice: 776, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "〆イワシ": { cat: "にぎりねた", unit: "枚", price: 36.55, lotQty: 20, lotPrice: 731, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "〆コハダ": { cat: "にぎりねた", unit: "枚", price: 24.0, lotQty: 20, lotPrice: 480, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "ホッキ貝": { cat: "にぎりねた", unit: "枚", price: 28.4, lotQty: 20, lotPrice: 568, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "サーモン焼ハラス": { cat: "にぎりねた", unit: "枚", price: 22.15, lotQty: 20, lotPrice: 443, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "イカ三昧キット（四種）": { cat: "にぎりねた", unit: "枚", price: 66.5, lotQty: 20, lotPrice: 1330, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "炙りイカ": { cat: "にぎりねた", unit: "枚", price: 30.45, lotQty: 20, lotPrice: 609, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "炙り〆サンマ": { cat: "にぎりねた", unit: "枚", price: 29.0, lotQty: 20, lotPrice: 580, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "ウナギスライス": { cat: "にぎりねた", unit: "枚", price: 27.7, lotQty: 20, lotPrice: 554, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "炙りタコ": { cat: "にぎりねた", unit: "枚", price: 25.2, lotQty: 20, lotPrice: 504, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "赤イカ": { cat: "にぎりねた", unit: "枚", price: 21.0, lotQty: 20, lotPrice: 420, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "本ズワイガニ開き": { cat: "にぎりねた", unit: "枚", price: 85.0, lotQty: 20, lotPrice: 1700, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "ホタテ開き": { cat: "にぎりねた", unit: "枚", price: 55.0, lotQty: 20, lotPrice: 1100, lotSpec: "20枚/P", supplier: "クラレイ" },
+  "生エビ": { cat: "にぎりねた", unit: "枚", price: 25.0, lotQty: 20, lotPrice: 500, lotSpec: "20枚/P", supplier: "EOS" },
+  "煮穴子スライス": { cat: "にぎりねた", unit: "枚", price: 26.3, lotQty: 20, lotPrice: 526, lotSpec: "20枚/P", supplier: "EOS" },
+  "活〆煮穴子カット": { cat: "にぎりねた", unit: "枚", price: 44.0, lotQty: 20, lotPrice: 880, lotSpec: "20枚/P", supplier: "EOS" },
+  "職人仕込み穴子２０尾": { cat: "にぎりねた", unit: "尾", price: 64.75, lotQty: 20, lotPrice: 1295, lotSpec: "20尾/袋", supplier: "EOS" },
+  "貝づくしキット": { cat: "にぎりねた", unit: "枚", price: 205.6, lotQty: 20, lotPrice: 4112, lotSpec: "20枚/P", supplier: "EOS" },
+  "イクラ": { cat: "魚介系材料", unit: "g", price: 7.896, lotQty: 250, lotPrice: 1974, lotSpec: "250g/P", supplier: "クラレイ" },
+  "紅ズワイ棒肉": { cat: "魚介系材料", unit: "g", price: 4.88, lotQty: 250, lotPrice: 1220, lotSpec: "250g/P", supplier: "クラレイ" },
+  "真イカ切り落とし": { cat: "魚介系材料", unit: "g", price: 1.397, lotQty: 300, lotPrice: 419, lotSpec: "300g/P", supplier: "クラレイ" },
+  "〆サバフィーレ": { cat: "魚介系材料", unit: "枚", price: 343.4, lotQty: 5, lotPrice: 1717, lotSpec: "5枚/P", supplier: "クラレイ" },
+  "ズワイほぐし身": { cat: "魚介系材料", unit: "g", price: 4.21, lotQty: 300, lotPrice: 1263, lotSpec: "300g/P", supplier: "クラレイ" },
+  "トビッコ": { cat: "魚介系材料", unit: "g", price: 5.096, lotQty: 500, lotPrice: 2548, lotSpec: "500g/P", supplier: "クラレイ" },
+  "カニミソ": { cat: "魚介系材料", unit: "g", price: 2.91, lotQty: 200, lotPrice: 582, lotSpec: "200g/本", supplier: "クラレイ" },
+  "イタヤ貝": { cat: "魚介系材料", unit: "g", price: 1.938, lotQty: 800, lotPrice: 1550, lotSpec: "800g/P", supplier: "クラレイ" },
+  "刻み鰻": { cat: "魚介系材料", unit: "g", price: 3.255, lotQty: 200, lotPrice: 651, lotSpec: "200g/P", supplier: "クラレイ" },
+  "アトラン炙りハラス端材": { cat: "魚介系材料", unit: "g", price: 1.662, lotQty: 500, lotPrice: 831, lotSpec: "500g/P", supplier: "クラレイ" },
+  "甘エビブロークン": { cat: "魚介系材料", unit: "g", price: 2.5, lotQty: 500, lotPrice: 1250, lotSpec: "500g/P", supplier: "クラレイ" },
+  "マグロタタキ": { cat: "魚介系材料", unit: "g", price: 2.25, lotQty: 400, lotPrice: 900, lotSpec: "400g/P", supplier: "ゼネック" },
+  "サラダエビ": { cat: "魚介系材料", unit: "尾", price: 16.667, lotQty: 120, lotPrice: 2000, lotSpec: "120尾/P", supplier: "その他" },
+  "焼あなご端材きざみ": { cat: "魚介系材料", unit: "g", price: 1.55, lotQty: 500, lotPrice: 775, lotSpec: "500g/P", supplier: "EOS" },
+  "シーチキン": { cat: "魚介系材料", unit: "g", price: 0.6, lotQty: 500, lotPrice: 300, lotSpec: "500g/P", supplier: "EOS" },
+  "アサリむき身": { cat: "魚介系材料", unit: "g", price: 0.82, lotQty: 1000, lotPrice: 820, lotSpec: "1000g/P", supplier: "その他" },
+  "縁側端材": { cat: "魚介系材料", unit: "g", price: 4.1, lotQty: 200, lotPrice: 820, lotSpec: "200g/P", supplier: "その他" },
+  "中国うなぎ": { cat: "魚介系材料", unit: "尾", price: 600.0, lotQty: 1, lotPrice: 600, lotSpec: "1尾", supplier: "その他" },
+  "赤エビ切り落とし": { cat: "巻用", unit: "g", price: 2.438, lotQty: 1000, lotPrice: 2438, lotSpec: "1000g/P", supplier: "クラレイ" },
+  "納豆": { cat: "巻用", unit: "g", price: 0.72, lotQty: 300, lotPrice: 216, lotSpec: "300g/本", supplier: "クラレイ" },
+  "マグロタタキ芯６０g": { cat: "巻用", unit: "本", price: 70.0, lotQty: 60, lotPrice: 4200, lotSpec: "60本/箱", supplier: "ゼネック" },
+  "マグロタタキ芯１２０g": { cat: "巻用", unit: "本", price: 140.0, lotQty: 30, lotPrice: 4200, lotSpec: "30本/箱", supplier: "ゼネック" },
+  "シーフードFL": { cat: "巻用", unit: "枚", price: 39.5, lotQty: 20, lotPrice: 790, lotSpec: "20枚/P", supplier: "EOS" },
+  "エビ芯": { cat: "巻用", unit: "g", price: 2.62, lotQty: 250, lotPrice: 655, lotSpec: "250g/P", supplier: "EOS" },
+  "厚焼たまご23カット": { cat: "巻用", unit: "本", price: 21.74, lotQty: 23, lotPrice: 500, lotSpec: "23本/P", supplier: "EOS" },
+  "厚焼たまご5カット": { cat: "巻用", unit: "本", price: 100.0, lotQty: 5, lotPrice: 500, lotSpec: "5本/袋", supplier: "EOS" },
+  "上巻芯": { cat: "巻用", unit: "本", price: 106.5, lotQty: 10, lotPrice: 1065, lotSpec: "10本/P", supplier: "EOS" },
+  "煮込みあなご副産物": { cat: "巻用", unit: "枚", price: 55.0, lotQty: 10, lotPrice: 550, lotSpec: "10枚/P", supplier: "EOS" },
+  "全型海苔": { cat: "海苔", unit: "枚", price: 40.25, lotQty: 100, lotPrice: 4025, lotSpec: "100枚/束", supplier: "EOS" },
+  "中巻海苔（帯なし）": { cat: "海苔", unit: "枚", price: 39.05, lotQty: 100, lotPrice: 3905, lotSpec: "100枚/束", supplier: "EOS" },
+  "半切海苔": { cat: "海苔", unit: "枚", price: 20.125, lotQty: 200, lotPrice: 4025, lotSpec: "200枚/束", supplier: "EOS" },
+  "軍艦海苔": { cat: "海苔", unit: "枚", price: 5.75, lotQty: 700, lotPrice: 4025, lotSpec: "700枚/缶", supplier: "EOS" },
+  "帯海苔": { cat: "海苔", unit: "枚", price: 1.398, lotQty: 2000, lotPrice: 2795, lotSpec: "2000枚/缶", supplier: "EOS" },
+  "刻み海苔": { cat: "海苔", unit: "g", price: 4.7, lotQty: 100, lotPrice: 470, lotSpec: "100g/袋", supplier: "EOS" },
+  "刻みネギ": { cat: "野菜", unit: "g", price: 1.447, lotQty: 300, lotPrice: 434, lotSpec: "300g/P", supplier: "EOS" },
+  "きゅうり": { cat: "野菜", unit: "本", price: 108.0, lotQty: 5, lotPrice: 540, lotSpec: "5本/袋", supplier: "EOS" },
+  "軍艦きゅうり": { cat: "野菜", unit: "枚", price: 2.7, lotQty: 40, lotPrice: 108, lotSpec: "40枚(1本分)/108円", supplier: "EOS" },
+  "きゅうり芯": { cat: "野菜", unit: "本", price: 18.0, lotQty: 6, lotPrice: 108, lotSpec: "6本(1本分)/108円", supplier: "EOS" },
+  "大葉": { cat: "野菜", unit: "枚", price: 5.2, lotQty: 100, lotPrice: 520, lotSpec: "100枚/束", supplier: "EOS" },
+  "グリーンリーフ葉取り": { cat: "野菜", unit: "g", price: 1.112, lotQty: 500, lotPrice: 556, lotSpec: "500g/P", supplier: "EOS" },
+  "煮つめ": { cat: "調味料", unit: "g", price: 1.05, lotQty: 500, lotPrice: 525, lotSpec: "500g/本", supplier: "EOS" },
+  "リッチマヨネーズ": { cat: "調味料", unit: "g", price: 0.893, lotQty: 300, lotPrice: 268, lotSpec: "300g/本", supplier: "EOS" },
+  "シルバーマヨネーズ": { cat: "調味料", unit: "g", price: 1.1, lotQty: 300, lotPrice: 330, lotSpec: "300g/本", supplier: "EOS" },
+  "おろし生姜": { cat: "調味料", unit: "g", price: 1.82, lotQty: 50, lotPrice: 91, lotSpec: "50g/本", supplier: "クラレイ" },
+  "もみじおろし": { cat: "調味料", unit: "g", price: 1.688, lotQty: 320, lotPrice: 540, lotSpec: "320g/本", supplier: "EOS" },
+  "白胡麻": { cat: "調味料", unit: "g", price: 0.78, lotQty: 1000, lotPrice: 780, lotSpec: "1000g/袋", supplier: "EOS" },
+  "練梅": { cat: "調味料", unit: "g", price: 1.477, lotQty: 300, lotPrice: 443, lotSpec: "300g/P", supplier: "クラレイ" },
+  "海鮮漬けのたれ": { cat: "調味料", unit: "g", price: 0.7, lotQty: 2000, lotPrice: 1400, lotSpec: "2000g/本", supplier: "EOS" },
+  "リッチタルタルソース": { cat: "調味料", unit: "g", price: 1.0, lotQty: 300, lotPrice: 300, lotSpec: "300g/本", supplier: "EOS" },
+  "おぼろ": { cat: "その他", unit: "g", price: 2.333, lotQty: 400, lotPrice: 933, lotSpec: "400g/袋", supplier: "EOS" },
+  "千切たくあん": { cat: "その他", unit: "g", price: 0.225, lotQty: 1000, lotPrice: 225, lotSpec: "1000g/袋", supplier: "EOS" },
+  "刻みきんし": { cat: "その他", unit: "g", price: 4.39, lotQty: 100, lotPrice: 439, lotSpec: "100g/袋", supplier: "EOS" },
+  "かねふく明太子（L)": { cat: "その他", unit: "本", price: 133.333, lotQty: 30, lotPrice: 4000, lotSpec: "30本/箱", supplier: "その他" },
+  "明太高菜": { cat: "その他", unit: "g", price: 2.2, lotQty: 100, lotPrice: 220, lotSpec: "100g/袋", supplier: "その他" },
+  "さけフレーク": { cat: "その他", unit: "g", price: 2.2, lotQty: 100, lotPrice: 220, lotSpec: "100g/袋", supplier: "その他" },
+  "奈良漬け": { cat: "その他", unit: "g", price: 2.0, lotQty: 1000, lotPrice: 2000, lotSpec: "1000g/袋", supplier: "その他" },
+  "五目味具": { cat: "その他", unit: "g", price: 1.46, lotQty: 1000, lotPrice: 1460, lotSpec: "1kg/P", supplier: "資材" },
+  "資材費": { cat: "その他", unit: "式", price: 1.0, lotQty: 1, lotPrice: 1, lotSpec: "1式", supplier: "資材" },
+  "エビきゅう巻（予約用）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "トロたく巻（予約用）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "三色巻（ジュエリーBOX用）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "サーモン細巻き": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "レタス巻": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "具ましまし！サーモン巻き": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "具ましまし！エビ巻き": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "具ましまし！マグロ巻き": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "具ましまし！ウナギ巻き": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "鉄火巻き（きゅうり入）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "トロたく巻（中巻）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" },
+  "松前寿司（青物尽くし用）": { cat: "別途製造分", unit: "本", price: 0, lotQty: 1, lotPrice: 0, lotSpec: "1本", supplier: "別途製造分" }
+};
+
+// 全124商品の定義（アプリ内に保持されるため、スプレッドシート側にレシピ表を作る必要はありません）
+let allProductsMaster = [
+  { id: "r01", cat: "予約商品", code: "", name: "豪華祝い盛", price: 10000, recipe: { "資材費": 402.7, "酢飯": 1200, "タイ": 4, "大トロ": 4, "ヒラス": 4, "サーモン": 4, "イクラ": 24, "ウニ": 24, "旨味エビ": 4, "活〆煮穴子カット": 4, "真フグ": 4, "数の子": 4, "中トロ": 4, "赤貝": 4, "ヤリイカ": 4, "本ズワイガニ開き": 4, "有頭エビ": 4, "帯海苔": 12, "軍艦海苔": 8, "白胡麻": 4, "もみじおろし": 4, "刻みネギ": 4, "煮つめ": 4 } },
+  { id: "r02", cat: "予約商品", code: "3992", name: "ファミリーセット（４人前）", price: 5000, recipe: { "資材費": 295.7, "酢飯": 940, "タイ": 4, "中トロ": 4, "ヒラス": 4, "サーモン": 8, "イクラ": 12, "ウニ": 12, "旨味エビ": 4, "煮穴子スライス": 4, "寿司エビ６LH": 4, "全型海苔": 1, "エビ芯": 45, "きゅうり芯": 1, "リッチマヨネーズ": 5, "マグロタタキ芯１２０g": 0.5, "千切たくあん": 10, "稲荷寿司（ごま入り）": 4, "帯海苔": 4, "軍艦海苔": 4, "軍艦きゅうり": 4, "シルバーマヨネーズ": 4, "刻みネギ": 5, "エビきゅう巻（予約用）": 0.5, "トロたく巻（予約用）": 0.5, "煮つめ": 4 } },
+  { id: "r03", cat: "予約商品", code: "4543", name: "ファミリーセット（２人前）", price: 3000, recipe: { "資材費": 177.7, "酢飯": 470, "タイ": 2, "中トロ": 2, "ヒラス": 2, "サーモン": 4, "イクラ": 6, "ウニ": 6, "旨味エビ": 2, "煮穴子スライス": 3, "寿司エビ６LH": 3, "全型海苔": 0.5, "エビ芯": 25, "きゅうり芯": 0.5, "リッチマヨネーズ": 3, "マグロタタキ芯１２０g": 0.25, "千切たくあん": 5, "稲荷寿司（ごま入り）": 3, "帯海苔": 3, "軍艦海苔": 2, "軍艦きゅうり": 2, "シルバーマヨネーズ": 2, "刻みネギ": 5, "エビきゅう巻（予約用）": 0.25, "トロたく巻（予約用）": 0.25, "煮つめ": 3 } },
+  { id: "r04", cat: "予約商品", code: "1889", name: "ジュエリーBOX", price: 2800, recipe: { "資材費": 178.9, "酢飯": 450, "シーフードFL": 3, "中巻海苔（帯なし）": 3, "厚焼たまご23カット": 3, "きゅうり芯": 3, "サーモン": 4, "マグロタタキ": 48, "ウニ": 24, "イクラ": 24, "サラダエビ": 6, "三色巻（ジュエリーBOX用）": 3, "千切たくあん": 6 } },
+  { id: "r05", cat: "予約商品", code: "", name: "特選5人前", price: 6000, recipe: { "資材費": 295.8, "酢飯": 900, "タイ": 5, "大トロ": 5, "ヒラス": 5, "サーモン": 5, "イクラ": 15, "ウニ": 15, "シマアジ": 5, "BTエビ": 5, "職人仕込み穴子２０尾": 5, "真フグ": 5, "帯海苔": 5, "軍艦海苔": 5, "軍艦きゅうり": 5, "白胡麻": 5, "もみじおろし": 5, "刻みネギ": 5, "煮つめ": 5 } },
+  { id: "r06", cat: "予約商品", code: "", name: "特選4人前", price: 5000, recipe: { "資材費": 223.8, "酢飯": 720, "タイ": 4, "大トロ": 4, "ヒラス": 4, "サーモン": 4, "イクラ": 12, "ウニ": 12, "シマアジ": 4, "BTエビ": 4, "職人仕込み穴子２０尾": 4, "真フグ": 4, "帯海苔": 4, "軍艦海苔": 4, "軍艦きゅうり": 4, "白胡麻": 4, "もみじおろし": 4, "刻みネギ": 4, "煮つめ": 4 } },
+  { id: "r07", cat: "予約商品", code: "", name: "特選3人前", price: 4000, recipe: { "資材費": 177.7, "酢飯": 540, "タイ": 3, "大トロ": 3, "ヒラス": 3, "サーモン": 3, "イクラ": 9, "ウニ": 9, "シマアジ": 3, "BTエビ": 3, "職人仕込み穴子２０尾": 3, "真フグ": 3, "帯海苔": 3, "軍艦海苔": 3, "軍艦きゅうり": 3, "白胡麻": 3, "もみじおろし": 3, "刻みネギ": 3, "煮つめ": 3 } },
+  { id: "r08", cat: "予約商品", code: "3564", name: "サーモンとマグロが主役の彩盛合", price: 3800, recipe: { "資材費": 177.7, "酢飯": 630, "サーモン": 12, "中トロ": 6, "バチマグロ": 6, "イクラ": 18, "半切海苔": 1, "軍艦海苔": 3, "軍艦きゅうり": 3, "シルバーマヨネーズ": 3, "サーモン芯": 20, "サーモン細巻き": 1 } },
+  { id: "r09", cat: "予約商品", code: "2083", name: "SUSHIケーキBOX", price: 1800, recipe: { "資材費": 54.3, "酢飯": 200, "おぼろ": 10, "刻みきんし": 10, "ヒラス": 2, "タイ": 2, "サーモン": 2, "生エビ": 2, "ヤリイカ": 2, "煮穴子スライス": 2, "バチマグロ": 2, "BTエビ": 2, "ウニ": 3, "イクラ": 3, "軍艦きゅうり": 2, "マグロタタキ": 10, "大葉": 1 } },
+  { id: "r10", cat: "予約商品", code: "2232", name: "ロイヤルカスタマー（特選盛 ２人前）", price: 2980, recipe: { "資材費": 159.2, "酢飯": 360, "タイ": 2, "大トロ": 2, "ヒラス": 2, "サーモン": 2, "イクラ": 6, "ウニ": 6, "旨味エビ": 2, "BTエビ": 2, "職人仕込み穴子２０尾": 2, "真フグ": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "白胡麻": 2, "もみじおろし": 2, "刻みネギ": 2, "煮つめ": 2 } },
+  { id: "m01", cat: "盛り合わせ", code: "2141", name: "上にぎり６貫", price: 699, recipe: { "資材費": 29.1, "酢飯": 120, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "サーモン": 1, "生エビ": 1, "煮穴子スライス": 1, "帯海苔": 1, "煮つめ": 1 } },
+  { id: "m02", cat: "盛り合わせ", code: "2400", name: "上にぎり８貫", price: 880, recipe: { "資材費": 34.2, "酢飯": 160, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "サーモン焼ハラス": 1, "生エビ": 1, "煮穴子スライス": 1, "帯海苔": 1, "軍艦海苔": 1, "軍艦きゅうり": 1, "煮つめ": 1 } },
+  { id: "m03", cat: "盛り合わせ", code: "2401", name: "上にぎり１０貫", price: 1080, recipe: { "資材費": 39.2, "酢飯": 200, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "サーモン焼ハラス": 1, "生エビ": 1, "ヒラス": 1, "石垣貝": 1, "煮穴子スライス": 1, "帯海苔": 1, "軍艦海苔": 1, "軍艦きゅうり": 1, "煮つめ": 1 } },
+  { id: "m04", cat: "盛り合わせ", code: "2402", name: "上にぎり１２貫", price: 1280, recipe: { "資材費": 46.0, "酢飯": 240, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "ウニ": 6, "寿司エビ６LH": 1, "ツブ貝": 1, "生エビ": 1, "ヒラス": 1, "赤貝": 1, "煮穴子スライス": 1, "帯海苔": 1, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 1 } },
+  { id: "m05", cat: "盛り合わせ", code: "4528", name: "上にぎり１６貫", price: 1680, recipe: { "資材費": 88.0, "酢飯": 320, "ヤリイカ": 2, "バチマグロ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "赤貝": 2, "生エビ": 2, "サーモン焼ハラス": 2, "軍艦海苔": 2, "軍艦きゅうり": 2 } },
+  { id: "m06", cat: "盛り合わせ", code: "4403", name: "上にぎり２０貫", price: 2080, recipe: { "資材費": 93.4, "酢飯": 400, "ヤリイカ": 2, "バチマグロ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "サーモン焼ハラス": 2, "生エビ": 2, "ヒラス": 2, "赤貝": 2, "煮穴子スライス": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 2 } },
+  { id: "m07", cat: "盛り合わせ", code: "4404", name: "上にぎり２４貫", price: 2380, recipe: { "資材費": 100.4, "酢飯": 480, "ヤリイカ": 2, "バチマグロ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "サーモン焼ハラス": 2, "生エビ": 2, "ヒラス": 2, "赤貝": 2, "煮穴子スライス": 2, "ツブ貝": 2, "石垣貝": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 2 } },
+  { id: "m08", cat: "盛り合わせ", code: "2406", name: "特上にぎり６貫", price: 880, recipe: { "資材費": 32.5, "酢飯": 120, "中トロ": 1, "旨味エビ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "ヒラス": 1, "軍艦海苔": 1, "軍艦きゅうり": 1 } },
+  { id: "m09", cat: "盛り合わせ", code: "4407", name: "特上にぎり８貫", price: 1180, recipe: { "資材費": 37.2, "酢飯": 160, "中トロ": 1, "旨味エビ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "ウニ": 6, "ヒラス": 1, "煮穴子スライス": 1, "帯海苔": 1, "煮つめ": 1, "軍艦海苔": 2, "軍艦きゅうり": 2 } },
+  { id: "m10", cat: "盛り合わせ", code: "2408", name: "特上にぎり１０貫", price: 1380, recipe: { "資材費": 40.0, "酢飯": 200, "中トロ": 1, "旨味エビ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "ウニ": 6, "ヒラス": 1, "赤貝": 1, "ツブ貝": 1, "煮穴子スライス": 1, "帯海苔": 1, "煮つめ": 1, "軍艦海苔": 2, "軍艦きゅうり": 2 } },
+  { id: "m11", cat: "盛り合わせ", code: "3822", name: "特上にぎり１６貫", price: 2180, recipe: { "資材費": 88.0, "酢飯": 320, "中トロ": 2, "旨味エビ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "ウニ": 12, "ヒラス": 2, "煮穴子スライス": 2, "帯海苔": 2, "煮つめ": 2, "軍艦海苔": 4, "軍艦きゅうり": 4 } },
+  { id: "m12", cat: "盛り合わせ", code: "2409", name: "特上にぎり１８貫", price: 2380, recipe: { "資材費": 94.4, "酢飯": 360, "中トロ": 2, "旨味エビ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "ウニ": 12, "ヒラス": 2, "赤貝": 2, "煮穴子スライス": 2, "帯海苔": 2, "煮つめ": 2, "軍艦海苔": 4, "軍艦きゅうり": 4 } },
+  { id: "m13", cat: "盛り合わせ", code: "2401", name: "特上にぎり２４貫", price: 2980, recipe: { "資材費": 88.8, "酢飯": 480, "中トロ": 2, "旨味エビ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "ウニ": 12, "ヒラス": 2, "赤貝": 2, "煮穴子スライス": 2, "ツブ貝": 2, "ヤリイカ": 2, "サーモン焼ハラス": 2, "帯海苔": 2, "煮つめ": 2, "軍艦海苔": 4, "軍艦きゅうり": 4 } },
+  { id: "m14", cat: "盛り合わせ", code: "4231", name: "特選盛 １人前", price: 1580, recipe: { "資材費": 81.4, "酢飯": 180, "タイ": 1, "大トロ": 1, "ヒラス": 1, "サーモン": 1, "イクラ": 3, "ウニ": 3, "旨味エビ": 1, "BTエビ": 1, "職人仕込み穴子２０尾": 1, "真フグ": 1, "帯海苔": 1, "軍艦海苔": 1, "軍艦きゅうり": 1, "白胡麻": 1, "もみじおろし": 1, "刻みネギ": 1, "煮つめ": 1 } },
+  { id: "m15", cat: "盛り合わせ", code: "2232", name: "特選盛 ２人前", price: 2980, recipe: { "資材費": 159.2, "酢飯": 360, "タイ": 2, "大トロ": 2, "ヒラス": 2, "サーモン": 2, "イクラ": 6, "ウニ": 6, "旨味エビ": 2, "BTエビ": 2, "職人仕込み穴子２０尾": 2, "真フグ": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "白胡麻": 2, "刻みネギ": 2, "煮つめ": 2 } },
+  { id: "m16", cat: "盛り合わせ", code: "2233", name: "特選盛 ３人前", price: 3980, recipe: { "資材費": 177.7, "酢飯": 540, "タイ": 3, "大トロ": 3, "ヒラス": 3, "サーモン": 3, "イクラ": 9, "ウニ": 9, "旨味エビ": 3, "BTエビ": 3, "職人仕込み穴子２０尾": 3, "真フグ": 3, "帯海苔": 3, "軍艦海苔": 3, "軍艦きゅうり": 3, "白胡麻": 3, "もみじおろし": 3, "刻みネギ": 3, "煮つめ": 3 } },
+  { id: "m17", cat: "盛り合わせ", code: "2234", name: "特選盛 ４人前", price: 4980, recipe: { "資材費": 223.8, "酢飯": 720, "タイ": 4, "大トロ": 4, "ヒラス": 4, "サーモン": 4, "イクラ": 12, "ウニ": 12, "旨味エビ": 4, "BTエビ": 4, "職人仕込み穴子２０尾": 4, "真フグ": 4, "帯海苔": 4, "軍艦海苔": 4, "軍艦きゅうり": 4, "白胡麻": 4, "もみじおろし": 4, "刻みネギ": 4, "煮つめ": 4 } },
+  { id: "m18", cat: "盛り合わせ", code: "2235", name: "特選盛 ５人前", price: 5980, recipe: { "資材費": 295.8, "酢飯": 900, "タイ": 5, "大トロ": 5, "ヒラス": 5, "サーモン": 5, "イクラ": 15, "ウニ": 15, "旨味エビ": 5, "BTエビ": 5, "職人仕込み穴子２０尾": 5, "真フグ": 5, "帯海苔": 5, "軍艦海苔": 5, "軍艦きゅうり": 5, "白胡麻": 5, "もみじおろし": 5, "刻みネギ": 5, "煮つめ": 5 } },
+  { id: "m19", cat: "盛り合わせ", code: "1739", name: "特選盛 8980円", price: 8980, recipe: { "資材費": 402.7, "酢飯": 1200, "タイ": 4, "大トロ": 4, "ヒラス": 4, "サーモン": 4, "イクラ": 24, "ウニ": 24, "旨味エビ": 4, "BTエビ": 4, "活〆煮穴子カット": 4, "真フグ": 4, "数の子": 4, "バチマグロ": 4, "赤貝": 4, "ヤリイカ": 4, "本ズワイガニ開き": 4, "帯海苔": 12, "軍艦海苔": 8, "もみじおろし": 4, "刻みネギ": 4, "煮つめ": 4 } },
+  { id: "m20", cat: "盛り合わせ", code: "2086", name: "マグロとサーモンが主役の盛合", price: 1980, recipe: { "資材費": 78.7, "酢飯": 360, "ヤリイカ": 2, "バチマグロ": 2, "中トロ": 2, "サーモン": 2, "イクラ": 12, "ツブ貝": 2, "生エビ": 2, "トリム": 2, "職人仕込み穴子２０尾": 2, "帯海苔": 2, "煮つめ": 2, "白胡麻": 2, "シルバーマヨネーズ": 2, "軍艦海苔": 2, "軍艦きゅうり": 2 } },
+  { id: "m21", cat: "盛り合わせ", code: "3832", name: "贅沢トロ三昧", price: 980, recipe: { "資材費": 37.6, "酢飯": 120, "中トロ": 2, "ブリトロ": 2, "トロサーモン": 2, "軍艦きゅうり": 2 } },
+  { id: "m22", cat: "盛り合わせ", code: "1990", name: "春の厳選寿司", price: 880, recipe: { "資材費": 39.7, "酢飯": 180, "ヤリイカ": 1, "タイ": 1, "寿司エビ６LH": 1, "貝づくしキット": 1, "ウニ": 3, "もみじおろし": 1, "刻みネギ": 1, "煮つめ": 2 } },
+  { id: "m23", cat: "盛り合わせ", code: "1991", name: "夏の厳選寿司", price: 880, recipe: { "資材費": 46.0, "酢飯": 180, "炙りイカ": 1, "サーモン焼ハラス": 1, "ウナギスライス": 1, "炙りタコ": 1, "生エビ": 1, "赤イカ": 1, "バチマグロ": 1, "ヒラス": 1, "イクラ": 1, "煮穴子スライス": 1, "刻みネギ": 1, "おろし生姜": 1, "帯海苔": 2, "煮つめ": 2 } },
+  { id: "m24", cat: "盛り合わせ", code: "1992", name: "秋の厳選寿司", price: 880, recipe: { "資材費": 55.7, "酢飯": 180, "サーモン": 1, "炙りイカ": 1, "サーモン焼ハラス": 2, "〆イワシ": 1, "炙り〆サンマ": 1, "寿司エビ６LH": 1, "トリム": 1, "バチマグロ": 1, "シルバーマヨネーズ": 1, "煮穴子スライス": 1, "刻みネギ": 2, "おろし生姜": 2, "帯海苔": 1, "煮つめ": 1 } },
+  { id: "m25", cat: "盛り合わせ", code: "1993", name: "冬の厳選寿司", price: 880, recipe: { "資材費": 55.7, "酢飯": 180, "真フグ": 1, "紅ズワイ棒肉": 8, "ホタテ開き": 1, "ズワイほぐし身": 6, "イクラ": 2, "タイ": 1, "サーモン": 1, "煮穴子スライス": 1, "バチマグロ": 1, "ヤリイカ": 1, "ウニ": 2, "もみじおろし": 1, "刻みネギ": 1, "帯海苔": 2, "軍艦きゅうり": 1, "煮つめ": 1 } },
+  { id: "m26", cat: "盛り合わせ", code: "3607", name: "うなぎたっぷり盛合せ", price: 880, recipe: { "資材費": 32.6, "酢飯": 200, "ウナギスライス": 5, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "生エビ": 1, "サーモン": 1, "帯海苔": 5, "煮つめ": 5 } },
+  { id: "m27", cat: "盛り合わせ", code: "2016", name: "北九州魚市場の魚が入った１０貫", price: 1280, recipe: { "資材費": 94.5, "酢飯": 200, "タイ": 1, "ヒラス": 1, "サーモン": 1, "ネタA": 1, "ネタB": 1, "ネタC": 1, "ネタD": 1, "ウニ": 6, "イクラ": 6, "活〆煮穴子カット": 1, "もみじおろし": 1, "おろし生姜": 1, "刻みネギ": 2, "帯海苔": 1, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 1 } },
+  { id: "m28", cat: "盛り合わせ", code: "2015", name: "北九州魚市場の魚が入った８貫", price: 980, recipe: { "資材費": 94.5, "酢飯": 200, "タイ": 1, "ヒラス": 1, "サーモン": 1, "ネタA": 1, "ネタB": 1, "ウニ": 6, "イクラ": 6, "活〆煮穴子カット": 1, "もみじおろし": 1, "おろし生姜": 1, "刻みネギ": 1, "帯海苔": 1, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 1 } },
+  { id: "m29", cat: "盛り合わせ", code: "2018", name: "コクと旨みの赤酢寿司８貫", price: 980, recipe: { "資材費": 94.5, "赤酢シャリ玉": 8, "タイ": 1, "ヒラス": 1, "サーモン": 1, "ネタA": 1, "ネタB": 1, "BTエビ": 1, "ウニ": 3, "イクラ": 3, "活〆煮穴子カット": 1, "もみじおろし": 1, "おろし生姜": 1, "刻みネギ": 1, "帯海苔": 1, "軍艦海苔": 1, "軍艦きゅうり": 1, "煮つめ": 1 } },
+  { id: "m30", cat: "盛り合わせ", code: "2096", name: "上盛 1人前", price: 1180, recipe: { "資材費": 68.7, "酢飯": 200, "ヤリイカ": 1, "バチマグロ": 1, "タイ": 1, "サーモン": 1, "イクラ": 6, "サーモン焼ハラス": 1, "寿司エビ６LH": 1, "ヒラス": 1, "白トリ貝": 1, "煮穴子スライス": 1, "帯海苔": 1, "軍艦海苔": 1, "軍艦きゅうり": 1, "煮つめ": 1 } },
+  { id: "m31", cat: "盛り合わせ", code: "4213", name: "上盛 2人前", price: 2280, recipe: { "資材費": 174.8, "酢飯": 400, "ヤリイカ": 2, "バチマグロ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "サーモン焼ハラス": 2, "寿司エビ６LH": 2, "ヒラス": 2, "白トリ貝": 2, "煮穴子スライス": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 2 } },
+  { id: "m32", cat: "盛り合わせ", code: "4214", name: "上盛 3人前", price: 3380, recipe: { "資材費": 198.2, "酢飯": 600, "ヤリイカ": 3, "バチマグロ": 3, "タイ": 3, "サーモン": 3, "イクラ": 18, "サーモン焼ハラス": 3, "寿司エビ６LH": 3, "ヒラス": 3, "白トリ貝": 3, "煮穴子スライス": 3, "帯海苔": 3, "軍艦海苔": 3, "軍艦きゅうり": 3, "煮つめ": 3 } },
+  { id: "m33", cat: "盛り合わせ", code: "4215", name: "上盛 4人前", price: 4480, recipe: { "資材費": 208.6, "酢飯": 800, "ヤリイカ": 4, "バチマグロ": 4, "タイ": 4, "サーモン": 4, "イクラ": 24, "サーモン焼ハラス": 4, "寿司エビ６LH": 4, "ヒラス": 4, "白トリ貝": 4, "煮穴子スライス": 4, "帯海苔": 4, "軍艦海苔": 4, "軍艦きゅうり": 4, "煮つめ": 4 } },
+  { id: "m34", cat: "盛り合わせ", code: "4216", name: "上盛 5人前", price: 5580, recipe: { "資材費": 222.4, "酢飯": 1000, "ヤリイカ": 5, "バチマグロ": 5, "タイ": 5, "サーモン": 5, "イクラ": 30, "サーモン焼ハラス": 5, "寿司エビ６LH": 5, "ヒラス": 5, "白トリ貝": 5, "煮穴子スライス": 5, "帯海苔": 5, "軍艦海苔": 5, "軍艦きゅうり": 5, "煮つめ": 5 } },
+  { id: "m35", cat: "盛り合わせ", code: "2079", name: "上盛（レタス巻入）", price: 2280, recipe: { "資材費": 174.8, "酢飯": 248.2, "ヤリイカ": 2, "バチマグロ": 2, "タイ": 2, "サーモン": 2, "イクラ": 12, "寿司エビ６LH": 2, "白トリ貝": 2, "煮穴子スライス": 2, "帯海苔": 2, "軍艦海苔": 2, "軍艦きゅうり": 2, "煮つめ": 2, "シーフードFL": 0.75, "グリーンリーフ葉取り": 7.5, "きゅうり芯": 0.75, "刻みきんし": 7.5, "リッチマヨネーズ": 7.5, "トビッコ": 3, "全型海苔": 0.75, "レタス巻": 0.75 } },
+  { id: "m36", cat: "盛り合わせ", code: "3974", name: "マグロ三昧", price: 1980, recipe: { "資材費": 156.8, "酢飯": 247.5, "バチマグロ": 2, "中トロ": 2, "大トロ": 2, "マグロタタキ芯６０g": 0.75, "刻みネギ": 2, "千切たくあん": 22, "白胡麻": 2, "中巻海苔（帯なし）": 0.75, "トロたく巻（中巻）": 0.75 } },
+  { id: "m37", cat: "盛り合わせ", code: "3737", name: "マグロづくし（小）", price: 980, recipe: { "資材費": 55.2, "酢飯": 165, "バチマグロ": 1, "中トロ": 1, "大トロ": 1, "マグロタタキ": 10, "軍艦きゅうり": 1, "軍艦海苔": 1, "刻みネギ": 2.5, "マグロ芯": 25, "中巻海苔（帯なし）": 0.5, "きゅうり芯": 0.5, "鉄火巻き（きゅうり入）": 0.5 } },
+  { id: "m38", cat: "盛り合わせ", code: "1732", name: "至福のマグロ盛", price: 2780, recipe: { "資材費": 138.8, "酢飯": 240, "バチマグロ": 4, "中トロ": 4, "大トロ": 4 } },
+  { id: "m39", cat: "盛り合わせ", code: "3832", name: "贅沢トロ三昧(大）", price: 1980, recipe: { "資材費": 142.9, "酢飯": 120, "中トロ": 4, "ブリトロ": 4, "トロサーモン": 4, "軍艦きゅうり": 4 } },
+  { id: "s01", cat: "単品", code: "1852", name: "タイ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "タイ": 5 } },
+  { id: "s02", cat: "単品", code: "1830", name: "ヒラス", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "ヒラス": 5 } },
+  { id: "s03", cat: "単品", code: "1843", name: "ブリ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "ブリ": 5 } },
+  { id: "s04", cat: "単品", code: "1821", name: "マグロ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "バチマグロ": 5 } },
+  { id: "s05", cat: "単品", code: "1856", name: "中トロ", price: 1280, recipe: { "資材費": 25.5, "酢飯": 100, "中トロ": 5 } },
+  { id: "s06", cat: "単品", code: "1854", name: "大トロ", price: 1580, recipe: { "資材費": 25.5, "酢飯": 100, "大トロ": 5 } },
+  { id: "s07", cat: "単品", code: "1743", name: "サーモン", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "サーモン": 5 } },
+  { id: "s08", cat: "単品", code: "4102", name: "炙りサーモン", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "シルバーマヨネーズ": 5, "トリム": 5 } },
+  { id: "s09", cat: "単品", code: "1628", name: "穴子スライス", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "煮穴子スライス": 5, "帯海苔": 5, "煮つめ": 5 } },
+  { id: "s10", cat: "単品", code: "3909", name: "とろける煮穴子", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "活〆煮穴子カット": 5, "白胡麻": 5, "帯海苔": 5, "煮つめ": 5 } },
+  { id: "s11", cat: "単品", code: "1661", name: "ウナギ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "ウナギスライス": 5, "帯海苔": 5, "煮つめ": 5 } },
+  { id: "s12", cat: "単品", code: "", name: "アジ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "アジフィーレ": 5, "刻みネギ": 5, "おろし生姜": 5 } },
+  { id: "s13", cat: "単品", code: "1917", name: "ウニ軍艦", price: 699, recipe: { "資材費": 25.5, "酢飯": 100, "ウニ": 30, "軍艦きゅうり": 5, "軍艦海苔": 5 } },
+  { id: "s14", cat: "単品", code: "1901", name: "イクラ軍艦", price: 799, recipe: { "資材費": 25.5, "酢飯": 100, "イクラ": 30, "軍艦きゅうり": 5, "軍艦海苔": 5 } },
+  { id: "s15", cat: "単品", code: "1639", name: "うに・イクラ軍艦", price: 699, recipe: { "資材費": 25.5, "酢飯": 100, "イクラ": 15, "ウニ": 15, "軍艦きゅうり": 5, "軍艦海苔": 5 } },
+  { id: "s16", cat: "単品", code: "2017", name: "イカ三昧", price: 499, recipe: { "資材費": 25.5, "酢飯": 120, "イカ三昧キット（四種）": 1, "ヤリイカ": 1, "炙りイカ": 1, "おろし生姜": 1, "刻みネギ": 1, "煮つめ": 1, "シルバーマヨネーズ": 1, "帯海苔": 1 } },
+  { id: "s17", cat: "単品", code: "2647", name: "青物づくし", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "アジフィーレ": 2, "〆イワシ": 1, "〆コハダ": 1, "おろし生姜": 4, "刻みネギ": 5, "〆サバフィーレ": 0.125, "白胡麻": 1, "大葉": 0.5, "松前寿司（青物尽くし用）": 0.125 } },
+  { id: "s18", cat: "単品", code: "1893", name: "イカ", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "ヤリイカ": 5 } },
+  { id: "s19", cat: "単品", code: "1787", name: "ツブ貝", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "ツブ貝": 5 } },
+  { id: "s20", cat: "単品", code: "1798", name: "トリ貝", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "白トリ貝": 5 } },
+  { id: "s21", cat: "単品", code: "1890", name: "やわらか煮あなご", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "職人仕込み穴子２０尾": 4, "白胡麻": 4, "帯海苔": 4, "煮つめ": 4 } },
+  { id: "s22", cat: "単品", code: "1670", name: "海老にぎり", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "寿司エビ６LH": 5 } },
+  { id: "s23", cat: "単品", code: "1989", name: "貝づくし", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "貝づくしキット": 1, "煮つめ": 2 } },
+  { id: "s24", cat: "単品", code: "1837", name: "真フグ", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "真フグ": 5, "もみじおろし": 5, "刻みネギ": 5, "煮つめ": 4 } },
+  { id: "s25", cat: "単品", code: "1858", name: "石垣貝", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "石垣貝": 5 } },
+  { id: "s26", cat: "単品", code: "1621", name: "赤貝", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "赤貝": 5 } },
+  { id: "s27", cat: "単品", code: "1621", name: "大エビ（BTエビ）", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "BTエビ": 4 } },
+  { id: "w01", cat: "巻寿司", code: "1965", name: "エビきゅう巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 170, "エビ芯": 50, "きゅうり芯": 1, "中巻海苔（帯なし）": 1, "リッチマヨネーズ": 2 } },
+  { id: "w02", cat: "巻寿司", code: "3530", name: "サーモン中巻", price: 699, recipe: { "資材費": 25.5, "酢飯": 170, "サーモン芯": 60, "刻みネギ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w03", cat: "巻寿司", code: "1969", name: "ネギトロ中巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 170, "マグロタタキ芯６０g": 1, "刻みネギ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w04", cat: "巻寿司", code: "1969", name: "ネギトロ太巻（ハーフ）", price: 599, recipe: { "資材費": 25.5, "酢飯": 110, "マグロタタキ芯１２０g": 0.5, "刻みネギ": 3, "全型海苔": 0.5 } },
+  { id: "w05", cat: "巻寿司", code: "1969", name: "ネギトロ太巻", price: 980, recipe: { "資材費": 25.5, "酢飯": 220, "マグロタタキ芯１２０g": 1, "刻みネギ": 3, "全型海苔": 1 } },
+  { id: "w06", cat: "巻寿司", code: "1985", name: "鉄火巻き", price: 699, recipe: { "資材費": 25.5, "酢飯": 170, "バチマグロ": 5, "刻みネギ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w07", cat: "巻寿司", code: "3531", name: "ブリ中巻", price: 699, recipe: { "資材費": 25.5, "酢飯": 170, "ブリ": 5, "刻みネギ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w08", cat: "巻寿司", code: "1921", name: "バリ旨！トロたく巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 170, "マグロタタキ芯６０g": 1, "刻みネギ": 3, "千切たくあん": 30, "白胡麻": 2, "中巻海苔（帯なし）": 1 } },
+  { id: "w09", cat: "巻寿司", code: "1943", name: "海鮮巻（ハーフ）", price: 699, recipe: { "資材費": 25.5, "酢飯": 110, "トリム": 2, "タイ": 2, "バチマグロ": 2, "厚焼たまご23カット": 0.5, "きゅうり芯": 0.5, "大葉": 1.5, "全型海苔": 0.5 } },
+  { id: "w10", cat: "巻寿司", code: "1943", name: "海鮮巻", price: 1280, recipe: { "資材費": 25.5, "酢飯": 220, "トリム": 4, "タイ": 4, "バチマグロ": 4, "厚焼たまご23カット": 1, "きゅうり芯": 1, "大葉": 3, "全型海苔": 1 } },
+  { id: "w11", cat: "巻寿司", code: "2624", name: "海鮮巻 (たまご抜き・ハーフ)", price: 699, recipe: { "資材費": 25.5, "酢飯": 110, "トリム": 2, "タイ": 2, "バチマグロ": 2, "きゅうり芯": 0.5, "大葉": 1.5, "全型海苔": 0.5 } },
+  { id: "w12", cat: "巻寿司", code: "2624", name: "海鮮巻 (たまご抜き)", price: 1280, recipe: { "資材費": 25.5, "酢飯": 220, "トリム": 4, "タイ": 4, "バチマグロ": 4, "きゅうり芯": 1, "大葉": 3, "全型海苔": 1 } },
+  { id: "w13", cat: "巻寿司", code: "2073", name: "タルタルエビサラダロール", price: 699, recipe: { "資材費": 25.5, "酢飯": 160, "エビ芯": 40, "グリーンリーフ葉取り": 15, "厚焼たまご23カット": 1, "きゅうり芯": 1, "リッチタルタルソース": 3, "トビッコ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w14", cat: "巻寿司", code: "4081", name: "サーモンサラダ巻", price: 699, recipe: { "資材費": 25.5, "酢飯": 130, "サーモン芯": 60, "グリーンリーフ葉取り": 15, "きゅうり芯": 1, "刻みきんし": 10, "リッチマヨネーズ": 10, "白胡麻": 5, "中巻海苔（帯なし）": 1 } },
+  { id: "w15", cat: "巻寿司", code: "1952", name: "レタス巻", price: 699, recipe: { "資材費": 25.5, "酢飯": 240, "シーフードFL": 1, "グリーンリーフ葉取り": 15, "きゅうり芯": 1, "刻みきんし": 10, "リッチマヨネーズ": 10, "トビッコ": 5, "全型海苔": 1 } },
+  { id: "w16", cat: "巻寿司", code: "1952", name: "レタス巻(ハーフ）", price: 399, recipe: { "資材費": 25.5, "酢飯": 120, "シーフードFL": 0.5, "グリーンリーフ葉取り": 7.5, "きゅうり芯": 0.5, "刻みきんし": 5, "リッチマヨネーズ": 5, "トビッコ": 2.5, "全型海苔": 0.5 } },
+  { id: "w17", cat: "巻寿司", code: "3588", name: "エビサラダ巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 160, "エビ芯": 30, "グリーンリーフ葉取り": 5, "きゅうり芯": 1, "厚焼たまご23カット": 1, "リッチマヨネーズ": 10, "中巻海苔（帯なし）": 1 } },
+  { id: "w18", cat: "巻寿司", code: "3690", name: "カニサラダ巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 160, "シーフードFL": 1, "グリーンリーフ葉取り": 5, "きゅうり芯": 1, "厚焼たまご23カット": 1, "リッチマヨネーズ": 10, "中巻海苔（帯なし）": 1 } },
+  { id: "w19", cat: "巻寿司", code: "4138", name: "アナキュー巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 160, "煮込みあなご副産物": 1, "きゅうり芯": 1, "厚焼たまご23カット": 1, "煮つめ": 2, "中巻海苔（帯なし）": 1 } },
+  { id: "w20", cat: "巻寿司", code: "1962", name: "イカシソ巻", price: 599, recipe: { "資材費": 25.5, "酢飯": 180, "真イカ切り落とし": 60, "練梅": 5, "大葉": 1.5, "中巻海苔（帯なし）": 1 } },
+  { id: "w21", cat: "巻寿司", code: "3533", name: "タイ中巻", price: 699, recipe: { "資材費": 25.5, "酢飯": 160, "タイ芯": 60, "刻みネギ": 5, "中巻海苔（帯なし）": 1 } },
+  { id: "w22", cat: "巻寿司", code: "1968", name: "納豆巻", price: 499, recipe: { "資材費": 25.5, "酢飯": 170, "納豆": 100, "刻みネギ": 3, "中巻海苔（帯なし）": 1 } },
+  { id: "w23", cat: "巻寿司", code: "3563", name: "具ましまし！サーモン巻入り助六", price: 599, recipe: { "資材費": 25.5, "酢飯": 80, "サーモン芯": 45, "刻みネギ": 1, "全型海苔": 0.25, "サーモン": 1, "トリム": 1, "シルバーマヨネーズ": 1, "具ましまし！サーモン巻き": 0.25, "稲荷寿司（ごま入り）": 2 } },
+  { id: "w24", cat: "巻寿司", code: "2397", name: "具ましまし！エビ巻入り助六", price: 599, recipe: { "資材費": 25.5, "酢飯": 100, "赤エビ切り落とし": 45, "大葉": 1, "全型海苔": 0.25, "生エビ": 2, "BTエビ": 1, "シルバーマヨネーズ": 1, "トビッコ": 1, "具ましまし！エビ巻き": 0.25, "稲荷寿司（ごま入り）": 1 } },
+  { id: "w25", cat: "巻寿司", code: "1847", name: "具ましまし！マグロ巻入り助六", price: 599, recipe: { "資材費": 25.5, "酢飯": 80, "マグロタタキ芯６０g": 0.25, "マグロ芯": 15, "ビンチョウ": 15, "全型海苔": 0.25, "大葉": 1, "バチマグロ": 2, "シルバーマヨネーズ": 1, "具ましまし！マグロ巻き": 0.25, "稲荷寿司（ごま入り）": 2 } },
+  { id: "w26", cat: "巻寿司", code: "2071", name: "具ましまし！うな玉助六", price: 699, recipe: { "資材費": 25.5, "酢飯": 80, "刻み鰻": 50, "煮つめ": 4, "きゅうり芯": 1, "全型海苔": 0.25, "ウナギスライス": 2, "厚焼たまご": 10, "帯海苔": 2, "具ましまし！ウナギ巻き": 0.25, "稲荷寿司（ごま入り）": 2 } },
+  { id: "w27", cat: "巻寿司", code: "1959", name: "具ましまし！海鮮３種巻(1/4）", price: 799, recipe: { "資材費": 25.5, "酢飯": 113, "サーモン芯": 45, "刻みネギ": 1, "全型海苔": 0.75, "具ましまし！サーモン巻き": 0.25, "マグロタタキ芯６０g": 0.25, "マグロ芯": 15, "ビンチョウ": 15, "大葉": 2, "具ましまし！マグロ巻き": 0.25, "赤エビ切り落とし": 45, "具ましまし！エビ巻き": 0.25 } },
+  { id: "w28", cat: "巻寿司", code: "1883", name: "具ましまし！３種巻ハーフセット", price: 1780, recipe: { "資材費": 25.5, "酢飯": 225, "サーモン芯": 90, "刻みネギ": 2, "全型海苔": 1.5, "具ましまし！サーモン巻き": 0.5, "マグロタタキ芯６０g": 0.5, "マグロ芯": 30, "ビンチョウ": 30, "大葉": 3, "具ましまし！マグロ巻き": 0.5, "赤エビ切り落とし": 90, "具ましまし！エビ巻き": 0.5 } },
+  { id: "w29", cat: "巻寿司", code: "3936", name: "具ましまし！サーモン巻き", price: 1380, recipe: { "資材費": 25.5, "酢飯": 150, "サーモン芯": 180, "刻みネギ": 3, "全型海苔": 1, "具ましまし！サーモン巻き": 1 } },
+  { id: "w30", cat: "巻寿司", code: "2398", name: "具ましまし！エビ巻き", price: 1380, recipe: { "資材費": 25.5, "酢飯": 150, "赤エビ切り落とし": 180, "大葉": 3, "全型海苔": 1, "具ましまし！エビ巻き": 1 } },
+  { id: "w31", cat: "巻寿司", code: "1863", name: "具ましまし！マグロ三姉妹巻き", price: 1380, recipe: { "資材費": 25.5, "酢飯": 150, "マグロタタキ芯６０g": 1, "ビンチョウ": 60, "マグロ芯": 60, "大葉": 3, "全型海苔": 1, "具ましまし！マグロ巻き": 1 } },
+  { id: "w32", cat: "巻寿司", code: "2070", name: "具ましまし！うなぎ巻き", price: 1380, recipe: { "資材費": 25.5, "酢飯": 150, "刻み鰻": 200, "きゅうり芯": 1, "煮つめ": 2, "全型海苔": 1, "具ましまし！ウナギ巻き": 1 } },
+  { id: "w33", cat: "巻寿司", code: "1942", name: "エビたっぷり上巻寿司", price: 980, recipe: { "資材費": 25.5, "酢飯": 200, "エビ芯": 80, "きゅうり芯": 1, "刻みきんし": 20, "全型海苔": 1, "中巻海苔（帯なし）": 0.5, "トビッコ": 4, "リッチマヨネーズ": 4 } },
+  { id: "w34", cat: "巻寿司", code: "1942", name: "エビたっぷり上巻寿司（ハーフ）", price: 499, recipe: { "資材費": 25.5, "酢飯": 100, "エビ芯": 40, "きゅうり芯": 0.5, "刻みきんし": 10, "全型海苔": 0.5, "中巻海苔（帯なし）": 0.25, "トビッコ": 2, "リッチマヨネーズ": 2 } },
+  { id: "w35", cat: "巻寿司", code: "1941", name: "魚屋の上巻き", price: 980, recipe: { "資材費": 25.5, "酢飯": 200, "エビ芯": 40, "全型海苔": 1, "煮込みあなご副産物": 1, "煮つめ": 2, "厚焼たまご5カット": 1, "きゅうり芯": 1, "リッチマヨネーズ": 2 } },
+  { id: "c01", cat: "ちらし", code: "", name: "魚屋さんの海鮮ちらし", price: 699, recipe: { "資材費": 25.5, "酢飯": 180, "海鮮丼用切り落とし": 100, "トビッコ": 1, "五目味具": 5, "刻み海苔": 1, "刻みきんし": 5, "白胡麻": 2, "刻みネギ": 3, "大葉": 1, "イクラ": 5 } },
+  { id: "c02", cat: "ちらし", code: "", name: "海鮮付け丼", price: 599, recipe: { "資材費": 25.5, "酢飯": 180, "海鮮丼用切り落とし": 100, "千切たくあん": 2, "刻み海苔": 1, "白胡麻": 2, "海鮮漬けのたれ": 5 } },
+  { id: "c03", cat: "ちらし", code: "", name: "ウニ・イクラ・カニちらし", price: 699, recipe: { "資材費": 25.5, "酢飯": 180, "ウニ": 10, "イクラ": 10, "ズワイほぐし身": 10, "真イカ切り落とし": 10, "刻みきんし": 2, "刻み海苔": 1 } },
+  { id: "c04", cat: "ちらし", code: "", name: "エビ漬け丼", price: 780, recipe: { "資材費": 25.5, "酢飯": 180, "赤エビ切り落とし": 100, "イクラ": 5, "大葉": 1, "刻み海苔": 2, "海鮮漬けのたれ": 5 } },
+  { id: "c05", cat: "ちらし", code: "", name: "サーモン・カニちらし", price: 499, recipe: { "資材費": 25.5, "茶飯（国産ブレンド米）": 200, "アトラン炙りハラス端材": 20, "ズワイほぐし身": 20, "刻みきんし": 2, "刻み海苔": 1, "イクラ": 5, "刻みネギ": 2 } },
+  { id: "c06", cat: "ちらし", code: "", name: "炙り明太重", price: 699, recipe: { "資材費": 25.5, "白飯": 200, "かねふく明太子（L)": 1, "さけフレーク": 10, "明太高菜": 10, "刻み海苔": 1, "刻みきんし": 5 } },
+  { id: "c07", cat: "ちらし", code: "", name: "あさり飯", price: 599, recipe: { "資材費": 25.5, "白飯": 200, "アサリむき身": 100, "白胡麻": 3, "刻みネギ": 3, "刻み海苔": 1, "海鮮漬けのたれ": 5 } },
+  { id: "o01", cat: "押し寿司・その他", code: "", name: "松前寿司", price: 880, recipe: { "資材費": 25.5, "酢飯": 180, "〆サバフィーレ": 1, "白胡麻": 2, "刻みネギ": 2, "大葉": 3 } },
+  { id: "o02", cat: "押し寿司・その他", code: "", name: "松前寿司(ハーフ）", price: 499, recipe: { "資材費": 25.5, "酢飯": 90, "〆サバフィーレ": 0.5, "白胡麻": 1, "刻みネギ": 1, "大葉": 1.5 } },
+  { id: "o03", cat: "押し寿司・その他", code: "", name: "炙り松前寿司", price: 880, recipe: { "資材費": 25.5, "酢飯": 180, "〆サバフィーレ": 1, "白胡麻": 2, "刻みネギ": 2, "大葉": 3 } },
+  { id: "o04", cat: "押し寿司・その他", code: "", name: "炙り松前寿司(ハーフ）", price: 499, recipe: { "資材費": 25.5, "酢飯": 90, "〆サバフィーレ": 0.5, "白胡麻": 1, "刻みネギ": 1, "大葉": 1.5 } },
+  { id: "o05", cat: "押し寿司・その他", code: "", name: "縁側押し寿司", price: 499, recipe: { "資材費": 25.5, "酢飯": 90, "縁側端材": 50, "トビッコ": 2, "刻みネギ": 1, "大葉": 1.5 } },
+  { id: "u01", cat: "うなぎ", code: "", name: "別格うな重", price: 980, recipe: { "資材費": 25.5, "茶飯（国産ブレンド米）": 200, "中国うなぎ": 0.5, "厚焼たまご5カット": 1, "奈良漬け": 2 } }
+];
+
+const STORAGE_PREFIX = "SUSHI_PLAN_DIRECT_V1_";
+const API_URL_KEY = "SUSHI_GSHEET_DIRECT_URL";
+let currentPlan = [];
+
+// スプレッドシートから最新データを同期（既存シートをそのまま反映）
+async function syncFromGoogleSheets() {
+  const url = localStorage.getItem(API_URL_KEY);
+  const statusEl = document.getElementById('syncStatus');
+  if (!url) {
+    statusEl.innerText = "● 内蔵マスターで稼働中（URL未設定）";
+    statusEl.style.color = "#0369a1";
+    return;
+  }
+
+  statusEl.innerText = "🔄 スプレッドシート同期中...";
+  statusEl.style.color = "#d97706";
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("通信エラー");
+    const data = await res.json();
+
+    // 1. 原材料マスターの上書き反映
+    if (data.materials && Object.keys(data.materials).length > 0) {
+      for (let k in data.materials) {
+        if (materials[k]) {
+          materials[k].price = data.materials[k].price;
+          materials[k].lotQty = data.materials[k].lotQty;
+          materials[k].lotPrice = data.materials[k].lotPrice;
+          materials[k].lotSpec = data.materials[k].lotSpec;
+          materials[k].supplier = data.materials[k].supplier;
+        } else {
+          materials[k] = data.materials[k];
+        }
+      }
+    }
+
+    // 2. 商品マスターの売価・呼出コード上書き反映
+    if (data.products && data.products.length > 0) {
+      data.products.forEach(p => {
+        const target = allProductsMaster.find(m => m.name === p.name);
+        if (target) {
+          if (p.price) target.price = p.price;
+          if (p.code !== undefined) target.code = p.code;
+          if (p.cat) target.cat = p.cat;
+        }
+      });
+    }
+
+    statusEl.innerText = `✅ スプレッドシート同期完了 (${new Date().toLocaleTimeString()})`;
+    statusEl.style.color = "#166534";
+    initCategoryDropdown();
+    renderPlan();
+  } catch (err) {
+    statusEl.innerText = "⚠️ 同期失敗（内蔵マスターを使用）";
+    statusEl.style.color = "#dc2626";
+  }
+}
+
+function saveAndSyncApi() {
+  const url = document.getElementById('apiUrlInput').value.trim();
+  if (!url) {
+    localStorage.removeItem(API_URL_KEY);
+    alert("URL設定を解除しました。内蔵マスターを使用します。");
+  } else {
+    localStorage.setItem(API_URL_KEY, url);
+  }
+  syncFromGoogleSheets();
+}
+
+function calcUnitCost(recipe) {
+  let cost = 0;
+  for (let key in recipe) {
+    if (materials[key]) cost += recipe[key] * materials[key].price;
+  }
+  return cost;
+}
+
+function initCategoryDropdown() {
+  const catSel = document.getElementById('categorySelect');
+  catSel.innerHTML = '';
+  PRODUCT_CATEGORIES.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.innerText = `【${cat}】`;
+    catSel.appendChild(opt);
+  });
+  onCategoryChanged();
+}
+
+function onCategoryChanged() {
+  const selectedCat = document.getElementById('categorySelect').value.replace(/【|】/g, '');
+  const pSel = document.getElementById('productSelect');
+  pSel.innerHTML = '';
+
+  allProductsMaster.filter(p => p.cat === selectedCat).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    const codeStr = p.code ? `[CD:${p.code}] ` : '';
+    opt.innerText = `${codeStr}${p.name} (¥${p.price.toLocaleString()})`;
+    pSel.appendChild(opt);
+  });
+}
+
+function addProductFromSelect() {
+  const targetId = document.getElementById('productSelect').value;
+  const masterItem = allProductsMaster.find(p => p.id === targetId);
+  if (!masterItem) return;
+
+  currentPlan.push({ pId: masterItem.id, qty: 1, price: masterItem.price });
+
+  currentPlan.sort((a, b) => {
+    const idxA = allProductsMaster.findIndex(p => p.id === a.pId);
+    const idxB = allProductsMaster.findIndex(p => p.id === b.pId);
+    return idxA - idxB;
+  });
+
+  renderPlan();
+}
+
+function removePlanRow(idx) {
+  currentPlan.splice(idx, 1);
+  renderPlan();
+}
+
+function clearPlan() {
+  if (confirm('現在のリストをすべてクリアしますか？')) {
+    currentPlan = [];
+    renderPlan();
+  }
+}
+
+function renderPlan() {
+  const tbody = document.getElementById('planBody');
+  tbody.innerHTML = '';
+
+  currentPlan.forEach((item, idx) => {
+    const master = allProductsMaster.find(p => p.id === item.pId);
+    if (!master) return;
+    
+    const unitCost = calcUnitCost(master.recipe);
+    const codeDisplay = master.code ? `<span style="color:#0284c7; font-weight:700;">[${master.code}]</span> ` : '';
+
+    tbody.innerHTML += `
+      <tr data-idx="${idx}">
+        <td>
+          <div style="font-weight:700;">${codeDisplay}${master.name}</div>
+          <div style="font-size:11px; color:#64748b;">[${master.cat}] / 1P原価: ¥${Math.round(unitCost).toLocaleString()}</div>
+        </td>
+        <td>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <input type="number" min="0" value="${item.qty}" oninput="updatePlanItem(${idx}, 'qty', this.value)" style="width:55px;">
+            <span style="font-size:11px; font-weight:bold; color:#334155;">P</span>
+          </div>
+        </td>
+        <td><input type="number" min="0" value="${item.price}" oninput="updatePlanItem(${idx}, 'price', this.value)"></td>
+        <td style="text-align:right; font-weight:700;" class="row-sales">¥0</td>
+        <td style="text-align:right;" class="row-rate">-</td>
+        <td style="text-align:center; white-space:nowrap;">
+          <button class="btn-recipe-view" onclick="showRecipeModal('${master.id}')">📖</button>
+          <button class="btn-del" onclick="removePlanRow(${idx})">✕</button>
+        </td>
+      </tr>
+    `;
+  });
+  recalculate();
+}
+
+function updatePlanItem(idx, field, val) {
+  currentPlan[idx][field] = Number(val) || 0;
+  recalculate();
+}
+
+function recalculate() {
+  let totalPacks = 0, totalSales = 0, totalCost = 0;
+  const matSum = {};
+  const reserveMatSum = {}; 
+  for (let key in materials) {
+    matSum[key] = 0;
+    reserveMatSum[key] = 0;
+  }
+
+  const rows = document.querySelectorAll('#planBody tr');
+
+  currentPlan.forEach((item, idx) => {
+    const master = allProductsMaster.find(p => p.id === item.pId);
+    if (!master) return;
+
+    const unitCost = calcUnitCost(master.recipe);
+    const sales = item.qty * item.price;
+    const cost = item.qty * unitCost;
+    const margin = sales - cost;
+    const rate = sales > 0 ? (margin / sales) * 100 : 0;
+
+    totalPacks += item.qty;
+    totalSales += sales;
+    totalCost += cost;
+
+    for (let mKey in master.recipe) {
+      if (matSum[mKey] !== undefined) {
+        const addedQty = master.recipe[mKey] * item.qty;
+        matSum[mKey] += addedQty;
+        if (master.cat === "予約商品") reserveMatSum[mKey] += addedQty;
+      }
+    }
+
+    if (rows[idx]) {
+      rows[idx].querySelector('.row-sales').innerText = '¥' + Math.round(sales).toLocaleString();
+      let badgeClass = rate >= 50 ? 'rate-good' : rate >= 40 ? 'rate-mid' : 'rate-low';
+      rows[idx].querySelector('.row-rate').innerHTML = `<span class="rate-badge ${badgeClass}">${rate.toFixed(1)}%</span>`;
+    }
+  });
+
+  const totalMargin = totalSales - totalCost;
+  const avgRate = totalSales > 0 ? (totalMargin / totalSales) * 100 : 0;
+
+  document.getElementById('sumPacks').innerText = Math.round(totalPacks).toLocaleString() + ' P';
+  document.getElementById('sumSales').innerText = '¥' + Math.round(totalSales).toLocaleString();
+  document.getElementById('sumCost').innerText = '¥' + Math.round(totalCost).toLocaleString();
+  document.getElementById('sumMargin').innerText = '¥' + Math.round(totalMargin).toLocaleString();
+  document.getElementById('avgMarginRate').innerText = avgRate.toFixed(1) + '%';
+
+  const matBody = document.getElementById('materialBody');
+  matBody.innerHTML = '';
+
+  MATERIAL_CATEGORY_ORDER.forEach(catName => {
+    const catKeys = Object.keys(materials).filter(k => materials[k].cat === catName && matSum[k] > 0 && !k.includes("資材費"));
+    
+    if (catKeys.length > 0) {
+      matBody.innerHTML += `
+        <tr class="cat-header-row">
+          <th colspan="5">【${catName}】</th>
+        </tr>
+      `;
+      catKeys.forEach(key => {
+        const qty = matSum[key];
+        const resQty = reserveMatSum[key];
+        const mat = materials[key];
+        const mCost = qty * mat.price;
+        
+        let qtyDisplay = `${(Math.round(qty * 100) / 100).toLocaleString()}`;
+        if (resQty > 0) {
+          qtyDisplay += `<br><span style="font-size:11px; color:#166534; font-weight:800;">（内予約分 ${(Math.round(resQty * 100) / 100).toLocaleString()}${mat.unit}）</span>`;
+        }
+
+        matBody.innerHTML += `
+          <tr>
+            <td style="font-weight:600; padding-left:14px; line-height:1.4;">${key}</td>
+            <td style="text-align:right; font-weight:800; color:var(--primary); line-height:1.3;">${qtyDisplay}</td>
+            <td style="vertical-align:top; padding-top:10px;">${mat.unit}</td>
+            <td style="text-align:right; vertical-align:top; padding-top:10px;">¥${Math.round(mCost).toLocaleString()}</td>
+            <td style="font-size:11px; color:#64748b; vertical-align:top; padding-top:10px;">${mat.supplier}</td>
+          </tr>
+        `;
+      });
+    }
+  });
+}
+
+function calculateRangeOrders() {
+  const start = document.getElementById('rangeStart').value;
+  const end = document.getElementById('rangeEnd').value;
+
+  if (!start || !end) { alert("集計開始日と終了日を選択してください。"); return; }
+  if (start > end) { alert("終了日は開始日以降の日付を指定してください。"); return; }
+
+  const totalMatQty = {};
+  for (let key in materials) totalMatQty[key] = 0;
+
+  let matchedDays = 0, totalRangePacks = 0;
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(STORAGE_PREFIX)) {
+      const dateStr = key.replace(STORAGE_PREFIX, '');
+      if (dateStr >= start && dateStr <= end) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          const planList = data.plan || [];
+          matchedDays++;
+
+          planList.forEach(item => {
+            const master = allProductsMaster.find(p => p.id === item.pId);
+            if (master && item.qty > 0) {
+              totalRangePacks += item.qty;
+              for (let mKey in master.recipe) {
+                if (totalMatQty[mKey] !== undefined) totalMatQty[mKey] += master.recipe[mKey] * item.qty;
+              }
+            }
+          });
+        } catch(e) {}
+      }
+    }
+  }
+
+  if (matchedDays === 0) {
+    alert(`指定された期間（${start} 〜 ${end}）に保存された製造計画データがありません。`);
+    return;
+  }
+
+  document.getElementById('modalTitle').innerText = `📦 期間原材料 発注集計表 (${start} 〜 ${end})`;
+  document.getElementById('modalSummaryText').innerText = `対象日数: ${matchedDays}日分 / 総製造パック数: ${Math.round(totalRangePacks).toLocaleString()} P`;
+
+  const tbody = document.getElementById('modalTableBody');
+  tbody.innerHTML = '';
+
+  SUPPLIER_ORDER.forEach(supName => {
+    const supKeys = Object.keys(materials).filter(k => materials[k].supplier === supName && totalMatQty[k] > 0 && !k.includes("資材費"));
+    
+    if (supKeys.length > 0) {
+      let subtotalOrderCost = 0;
+      let supRowsHtml = '';
+
+      supKeys.forEach(key => {
+        const needQty = totalMatQty[key];
+        const mat = materials[key];
+        const lotUnitQty = mat.lotQty || 1;
+        const orderLots = Math.ceil(needQty / lotUnitQty);
+        const estCost = orderLots * mat.lotPrice;
+        subtotalOrderCost += estCost;
+
+        supRowsHtml += `
+          <tr>
+            <td style="font-weight:700; padding-left:14px;">${key}</td>
+            <td style="text-align:right; font-weight:600;">${(Math.round(needQty*10)/10).toLocaleString()}</td>
+            <td>${mat.unit}</td>
+            <td style="font-size:11px; color:#64748b;">${mat.lotSpec}</td>
+            <td style="text-align:right; font-weight:800; color:#059669; font-size:14px;">${orderLots.toLocaleString()} <span style="font-size:11px; font-weight:normal;">ロット</span></td>
+            <td style="text-align:right; font-weight:700;">¥${Math.round(estCost).toLocaleString()}</td>
+            <td style="font-size:11px; color:#64748b;">${mat.cat}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML += `
+        <tr class="sup-header-row">
+          <th colspan="5">【発注先：${supName}】 (${supKeys.length}品目)</th>
+          <th style="text-align:right;">発注小計: ¥${Math.round(subtotalOrderCost).toLocaleString()}</th>
+          <th></th>
+        </tr>
+      ` + supRowsHtml;
+    }
+  });
+
+  document.getElementById('rangeModal').classList.add('open');
+}
+
+function showRecipeModal(pId) {
+  const item = allProductsMaster.find(p => p.id === pId);
+  if (!item) return;
+
+  const codeStr = item.code ? ` (呼出CD: ${item.code})` : '';
+  document.getElementById('recipeModalTitle').innerText = `📖 【${item.name}】${codeStr} レシピ詳細`;
+
+  let rowsHtml = '';
+  for (let mKey in item.recipe) {
+    const useQty = item.recipe[mKey];
+    const mat = materials[mKey];
+    if (mat) {
+      const lineCost = useQty * mat.price;
+      rowsHtml += `
+        <tr>
+          <td style="font-weight:700;">${mKey}</td>
+          <td style="text-align:right;">${useQty}</td>
+          <td>${mat.unit}</td>
+          <td style="text-align:right;">¥${mat.price < 1 ? mat.price.toFixed(3) : mat.price.toFixed(1)}</td>
+          <td style="text-align:right; font-weight:700;">¥${lineCost.toFixed(1)}</td>
+          <td style="font-size:11px; color:#64748b;">${mat.cat}</td>
+          <td style="font-size:11px; color:#64748b;">${mat.supplier}</td>
+        </tr>
+      `;
+    }
+  }
+
+  document.getElementById('recipeModalBody').innerHTML = `
+    <h3 style="font-size:13px; font-weight:800; margin-bottom:6px; color:#1e293b;">■ 1パックあたり 原材料構成明細表</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>原材料名</th>
+          <th style="text-align:right;">使用数量</th>
+          <th>単位</th>
+          <th style="text-align:right;">単価</th>
+          <th style="text-align:right;">原価小計</th>
+          <th>材料区分</th>
+          <th>仕入先</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById('recipeModal').classList.add('open');
+}
+
+function closeRecipeModal() { document.getElementById('recipeModal').classList.remove('open'); }
+function closeModal() { document.getElementById('rangeModal').classList.remove('open'); }
+
+function exportAllPlans() {
+  const allData = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(STORAGE_PREFIX)) allData[key] = localStorage.getItem(key);
+  }
+  const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sushi_plans_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importAllPlans(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      let count = 0;
+      for (let key in imported) {
+        if (key.startsWith(STORAGE_PREFIX)) {
+          localStorage.setItem(key, imported[key]);
+          count++;
+        }
+      }
+      alert(`${count}日分の計画データを正常に読み込みました！`);
+      onDateChanged();
+      renderSavedChips();
+    } catch (err) {
+      alert('ファイルの形式が正しくありません。');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function savePlanForDate() {
+  const dateVal = document.getElementById('planDate').value;
+  if (!dateVal) { alert("日付を選択してください。"); return; }
+  const payload = { date: dateVal, plan: currentPlan, updatedAt: new Date().toISOString() };
+  localStorage.setItem(STORAGE_PREFIX + dateVal, JSON.stringify(payload));
+  renderSavedChips();
+  updateDateStatus(true);
+  alert(`【${dateVal}】の製造計画を保存しました。`);
+}
+
+function onDateChanged() {
+  const dateVal = document.getElementById('planDate').value;
+  loadPlanForDate(dateVal);
+}
+
+function loadPlanForDate(dateVal) {
+  if (!dateVal) return;
+  const raw = localStorage.getItem(STORAGE_PREFIX + dateVal);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      currentPlan = parsed.plan || [];
+      updateDateStatus(true);
+    } catch (e) {
+      currentPlan = [];
+      updateDateStatus(false);
+    }
+  } else {
+    currentPlan = [];
+    updateDateStatus(false);
+  }
+  renderPlan();
+  renderSavedChips();
+}
+
+function deletePlanForDate() {
+  const dateVal = document.getElementById('planDate').value;
+  if (!dateVal || !localStorage.getItem(STORAGE_PREFIX + dateVal)) return;
+  if (confirm(`【${dateVal}】の保存データを削除しますか？`)) {
+    localStorage.removeItem(STORAGE_PREFIX + dateVal);
+    updateDateStatus(false);
+    renderSavedChips();
+    currentPlan = [];
+    renderPlan();
+  }
+}
+
+function updateDateStatus(isSaved) {
+  const el = document.getElementById('dateStatus');
+  if (isSaved) {
+    el.innerText = "● 保存済み";
+    el.style.color = "var(--accent)";
+  } else {
+    el.innerText = "○ 未保存";
+    el.style.color = "var(--text-muted)";
+  }
+}
+
+function copyFromPreviousDay() {
+  const curDateStr = document.getElementById('planDate').value;
+  if (!curDateStr) return;
+  const curDate = new Date(curDateStr);
+  curDate.setDate(curDate.getDate() - 1);
+  const prevDateStr = curDate.toISOString().split('T')[0];
+  const raw = localStorage.getItem(STORAGE_PREFIX + prevDateStr);
+  if (!raw) { alert(`前日【${prevDateStr}】の保存データがありません。`); return; }
+  if (confirm(`前日【${prevDateStr}】の計画をコピーしますか？`)) {
+    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    updateDateStatus(false);
+    renderPlan();
+  }
+}
+
+function copyFromSelectedDate() {
+  const sourceDateStr = document.getElementById('copySourceSelect').value;
+  if (!sourceDateStr) return;
+  const raw = localStorage.getItem(STORAGE_PREFIX + sourceDateStr);
+  if (!raw) return;
+  if (confirm(`【${sourceDateStr}】の計画をコピーしますか？`)) {
+    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    updateDateStatus(false);
+    renderPlan();
+  }
+}
+
+function copyCurrentPlanToTargetDate() {
+  const targetDateStr = document.getElementById('copyTargetDate').value;
+  if (!targetDateStr) { alert("コピー先の日付を選択してください。"); return; }
+  const curDateStr = document.getElementById('planDate').value;
+  if (targetDateStr === curDateStr) {
+    alert("現在と同じ日付が選択されています。別の日付を指定してください。");
+    return;
+  }
+  if (confirm(`現在の計画内容を【${targetDateStr}】として直接コピー保存しますか？`)) {
+    const payload = {
+      date: targetDateStr,
+      plan: JSON.parse(JSON.stringify(currentPlan)),
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_PREFIX + targetDateStr, JSON.stringify(payload));
+    renderSavedChips();
+    alert(`【${targetDateStr}】へ計画を複製保存しました！`);
+  }
+}
+
+function onSavedDateSelectChange(selectedDate) {
+  if (!selectedDate) return;
+  document.getElementById('planDate').value = selectedDate;
+  loadPlanForDate(selectedDate);
+}
+
+function renderSavedChips() {
+  const savedDateSel = document.getElementById('savedDateSelect');
+  const sourceSel = document.getElementById('copySourceSelect');
+  const currentDate = document.getElementById('planDate').value;
+
+  if (savedDateSel) savedDateSel.innerHTML = '<option value="">-- 保存済みの日付を選択 --</option>';
+  if (sourceSel) sourceSel.innerHTML = '<option value="">-- 日付選択 --</option>';
+
+  const savedDates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(STORAGE_PREFIX)) savedDates.push(key.replace(STORAGE_PREFIX, ''));
+  }
+  savedDates.sort().reverse();
+
+  if (savedDates.length === 0) {
+    if (savedDateSel) savedDateSel.innerHTML = '<option value="">(保存データなし)</option>';
+    return;
+  }
+
+  savedDates.forEach(d => {
+    if (savedDateSel) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.innerText = (d === currentDate) ? `📅 ${d}（表示中）` : `📅 ${d}`;
+      if (d === currentDate) opt.selected = true;
+      savedDateSel.appendChild(opt);
+    }
+    if (sourceSel) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.innerText = d;
+      sourceSel.appendChild(opt);
+    }
+  });
+}
+
+window.onload = function() {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  document.getElementById('planDate').value = todayStr;
+  
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('copyTargetDate').value = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+  document.getElementById('rangeStart').value = todayStr;
+  const after3Days = new Date();
+  after3Days.setDate(after3Days.getDate() + 3);
+  document.getElementById('rangeEnd').value = `${after3Days.getFullYear()}-${String(after3Days.getMonth() + 1).padStart(2, '0')}-${String(after3Days.getDate()).padStart(2, '0')}`;
+
+  const savedApiUrl = localStorage.getItem(API_URL_KEY) || "";
+  document.getElementById('apiUrlInput').value = savedApiUrl;
+
+  initCategoryDropdown();
+  loadPlanForDate(todayStr);
+
+  if (savedApiUrl) {
+    syncFromGoogleSheets();
+  }
+};
+</script>
+</body>
+</html>
