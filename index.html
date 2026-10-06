@@ -587,7 +587,7 @@ async function syncFromGoogleSheets() {
   statusEl.style.color = "#d97706";
 
   try {
-    const res = await fetch(url);
+   const res = await fetch(url + "?t=" + new Date().getTime());
     if (!res.ok) throw new Error("通信エラー");
     const data = await res.json();
 
