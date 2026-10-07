@@ -937,7 +937,7 @@ window.onload = function() {
   after3Days.setDate(after3Days.getDate() + 3);
   document.getElementById('rangeEnd').value = `${after3Days.getFullYear()}-${String(after3Days.getMonth() + 1).padStart(2, '0')}-${String(after3Days.getDate()).padStart(2, '0')}`;
 
-  const savedApiUrl = localStorage.getItem(API_URL_KEY) || "";
+  const savedApiUrl = localStorage.getItem(API_URL_KEY) || "https://script.google.com/macros/s/AKfycbx719IhvKEQG4GRmYlDDDBHzQsAMpfkOTQjsO4-WsecgyLEm07jE6vD4fMoJgSNlE5R/exec";
   document.getElementById('apiUrlInput').value = savedApiUrl;
 
   initCategoryDropdown();
