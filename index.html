@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>水産寿司 製造計画システム（現場特化・完全版）</title>
+<title>水産寿司 製造計画システム（現場特化・CSV出力版）</title>
 <style>
   :root {
     --primary: #1e3a8a;
@@ -71,11 +71,6 @@
   .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .panel-title { font-size: 15px; font-weight: 700; color: #0f172a; }
 
-  .progress-box { margin-bottom: 12px; background: #f0fdf4; padding: 12px; border-radius: 8px; border: 2px solid #bbf7d0; }
-  .progress-header { display: flex; justify-content: space-between; font-weight: 900; margin-bottom: 8px; color: #166534; font-size: 15px; }
-  .progress-bar-bg { background: #dcfce7; border-radius: 6px; height: 16px; width: 100%; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
-  .progress-bar-fill { background: #059669; height: 100%; width: 0%; transition: width 0.4s ease; }
-
   .add-box { display: flex; gap: 8px; margin-bottom: 14px; background: var(--primary-light); padding: 10px; border-radius: 6px; flex-wrap: wrap; align-items: center; }
   .add-box select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 600; background: white; max-width: 250px; }
   #productSelect { flex: 1; min-width: 280px; }
@@ -95,10 +90,6 @@
   input[type="number"] { width: 100%; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; text-align: right; font-size: 13px; font-weight: 700; }
   input[type="number"]:focus { outline: none; border-color: var(--primary); background: #f0fdf4; }
 
-  /* チェックボックス完了時の行スタイル */
-  .row-checked { background-color: #f8fafc; opacity: 0.5; filter: grayscale(80%); transition: 0.3s; }
-  .chk-done { width: 26px; height: 26px; cursor: pointer; accent-color: #059669; }
-
   .rate-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
   .rate-good { background: #dcfce7; color: #166534; }
   .rate-mid { background: #fef9c3; color: #854d0e; }
@@ -113,7 +104,7 @@
   .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; }
   .btn-close { background: #64748b; color: white; padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; }
 
-  /* ★2. スマホ用：極限スッキリレイアウト★ */
+  /* ★スマホ用：極限スッキリレイアウト★ */
   @media(max-width: 768px) {
     #planTable, #planTable thead, #planTable tbody, #planTable tr, #planTable th, #planTable td {
       display: block; width: 100%;
@@ -144,6 +135,7 @@
 
     /* スマホ画面用に左側のラベルを追加 */
     #planTable td:nth-child(2)::before { content: "📦 製造数(P)"; font-size: 14px; font-weight: 900; color: #334155; }
+    #planTable td:nth-child(2) input { max-width: 90px; font-size: 18px !important; padding: 8px !important; }
     
     /* 売価・製造金額・値入れ率を「極小・控えめ」にする */
     #planTable td:nth-child(3) { padding: 4px 0 !important; border-bottom: none !important; }
@@ -161,56 +153,13 @@
     /* スマホだと操作ボタンを右寄せに */
     #planTable td:nth-child(6) { justify-content: flex-end; gap: 10px; }
   }
-
-  /* ★3. A4印刷モード用の特別レイアウト★ */
-  @media print {
-    header, .sync-bar, .top-tools, .copy-bar, .saved-select-bar, .daily-btns, .summary-grid, .add-box, .btn-tool, .btn-del, .btn-recipe-view, .rate-badge, .progress-box {
-      display: none !important;
-    }
-    
-    body { background: white !important; color: black !important; padding: 0 !important; font-size: 13px !important; }
-    .container { max-width: 100% !important; margin: 0 !important; }
-    .panel { border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 30px !important; page-break-inside: avoid; }
-    .panel-title { font-size: 18px !important; font-weight: 900 !important; border-bottom: 2px solid #000 !important; padding-bottom: 4px !important; margin-bottom: 12px !important; }
-
-    table, #planTable { display: table !important; width: 100% !important; border-collapse: collapse !important; }
-    thead, #planTable thead { display: table-header-group !important; }
-    tbody, #planTable tbody { display: table-row-group !important; }
-    tr, #planTable tr { display: table-row !important; margin: 0 !important; border: none !important; box-shadow: none !important; padding: 0 !important; opacity: 1 !important; filter: none !important; background: transparent !important; }
-    th, td, #planTable th, #planTable td { display: table-cell !important; border: 1px solid #000 !important; padding: 8px !important; color: #000 !important; text-align: left !important; }
-    th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    #planTable td::before { display: none !important; }
-
-    /* 厨房指示書に不要な列を非表示 */
-    #planTable th:nth-child(3), #planTable td:nth-child(3),
-    #planTable th:nth-child(4), #planTable td:nth-child(4),
-    #planTable th:nth-child(5), #planTable td:nth-child(5),
-    #planTable th:nth-child(6), #planTable td:nth-child(6) {
-      display: none !important;
-    }
-    #materialBody th:nth-child(4), #materialBody td:nth-child(4),
-    #materialBody th:nth-child(5), #materialBody td:nth-child(5) {
-      display: none !important;
-    }
-
-    /* 原価情報とチェックボックスを印刷時は隠す */
-    .cost-info, .chk-done { display: none !important; }
-    
-    input[type="number"], input[type="date"] {
-      border: none !important; background: transparent !important; font-size: 16px !important; font-weight: bold !important; color: black !important; padding: 0 !important; width: auto !important; text-align: left !important;
-    }
-    
-    .daily-inputs { border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; display: block !important; margin-bottom: 10px !important; }
-    .daily-inputs label { font-size: 18px !important; color: black !important; }
-    #dateStatus { display: none !important; }
-  }
 </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>🍣 水産寿司 製造計画システム（現場特化・完全版）</h1>
+    <h1>🍣 水産寿司 製造計画システム（現場特化・CSV対応）</h1>
   </header>
 
   <div class="sync-bar">
@@ -252,7 +201,7 @@
         <span id="dateStatus" style="font-size: 18px; color: var(--text-muted); font-weight: 800;"></span>
       </div>
       <div class="daily-btns">
-        <button class="btn-save" onclick="savePlanForDate()">💾 現在の計画を進捗ごと保存</button>
+        <button class="btn-save" onclick="savePlanForDate()">💾 現在の計画を保存</button>
         <button class="btn-copy-prev" onclick="copyFromPreviousDay()">⏪ 前日の計画をコピー</button>
         <button class="btn-del-plan" onclick="deletePlanForDate()">🗑️ この日の計画を削除</button>
       </div>
@@ -304,21 +253,10 @@
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">1. 本日の製造品目リスト</div>
-        <div>
-          <!-- ★A4印刷ボタンを追加★ -->
-          <button class="btn-tool" style="background:#475569; color:white; font-weight:bold; padding:6px 12px;" onclick="window.print()">🖨️ A4指示書を印刷</button>
+        <div style="display:flex; gap:8px;">
+          <!-- ★CSV出力ボタン★ -->
+          <button class="btn-tool" style="background:#0284c7; color:white; font-weight:bold; padding:6px 12px; border:none;" onclick="exportPlanToCSV()">📥 CSVで出力 (ラベル機・エクセル用)</button>
           <button class="btn-tool" onclick="clearPlan()">全クリア</button>
-        </div>
-      </div>
-
-      <!-- ★製造進捗バー★ -->
-      <div class="progress-box">
-        <div class="progress-header">
-          <span>🎯 製造進捗（チェック済 または 製造完了）</span>
-          <span id="progressText">0 / 0 P (0%)</span>
-        </div>
-        <div class="progress-bar-bg">
-          <div id="progressBar" class="progress-bar-fill"></div>
         </div>
       </div>
 
@@ -336,7 +274,7 @@
         <thead>
           <tr>
             <th>商品名</th>
-            <th style="width: 120px;">製造数(P)</th>
+            <th style="width: 100px;">製造数(P)</th>
             <th style="width: 85px;">売価(円)</th>
             <th style="text-align: right;">製造金額</th>
             <th style="text-align: right;">値入れ率</th>
@@ -528,8 +466,7 @@ function addProductFromSelect() {
   const masterItem = allProductsMaster.find(p => p.id === targetId);
   if (!masterItem) return;
 
-  // 初期値として「made(製造済): 0」「done(チェック): false」を持たせる
-  currentPlan.push({ pId: masterItem.id, qty: 1, price: masterItem.price, made: 0, done: false });
+  currentPlan.push({ pId: masterItem.id, qty: 1, price: masterItem.price });
 
   currentPlan.sort((a, b) => {
     const idxA = allProductsMaster.findIndex(p => p.id === a.pId);
@@ -552,34 +489,12 @@ function clearPlan() {
   }
 }
 
-// ★チェックボックスを押した時の処理
-function toggleDone(idx, isChecked) {
-  currentPlan[idx].done = isChecked;
-  // チェックを入れた時に「製造済」が0なら、自動で「計画数」と同じ数字を入れる
-  if (isChecked && (!currentPlan[idx].made || currentPlan[idx].made === 0)) {
-    currentPlan[idx].made = currentPlan[idx].qty;
-  }
-  renderPlan(); 
-}
-
-// ★製造数(計画) や 売価 を更新する処理（再描画せず数字だけ更新）
 function updatePlanItem(idx, field, val) {
   currentPlan[idx][field] = Number(val) || 0;
-  // 計画数と製造済の数が一致したら自動で完了にする判定
-  if (field === 'qty' || field === 'made') {
-    if (currentPlan[idx].made >= currentPlan[idx].qty && currentPlan[idx].qty > 0) {
-      currentPlan[idx].done = true;
-      renderPlan(); // 状態が変わる場合は再描画
-      return;
-    } else if (currentPlan[idx].done && currentPlan[idx].made < currentPlan[idx].qty) {
-      currentPlan[idx].done = false;
-      renderPlan();
-      return;
-    }
-  }
   recalculate();
 }
 
+// ★「済」を消し、スッキリさせた商品リスト表示機能
 function renderPlan() {
   const tbody = document.getElementById('planBody');
   tbody.innerHTML = '';
@@ -590,33 +505,17 @@ function renderPlan() {
     
     const unitCost = calcUnitCost(master.recipe);
     const codeDisplay = master.code ? `<span style="color:#0284c7; font-weight:900;">[${master.code}]</span> ` : '';
-    
-    // チェックボックスの状態
-    const isDone = item.done ? 'checked' : '';
-    const rowClass = item.done ? 'row-checked' : '';
-    const madeVal = item.made || 0;
 
     tbody.innerHTML += `
-      <tr data-idx="${idx}" class="${rowClass}">
+      <tr data-idx="${idx}">
         <td>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <input type="checkbox" class="chk-done" ${isDone} onchange="toggleDone(${idx}, this.checked)">
-            <div>
-              <div style="font-weight:900; font-size:17px; color:var(--primary); margin-bottom:4px; line-height:1.4;">${codeDisplay}${master.name}</div>
-              <div class="cost-info" style="font-size:13px; color:#475569; font-weight:700;">【${master.cat}】 / 1P原価: <span style="color:#dc2626;">¥${Math.round(unitCost).toLocaleString()}</span></div>
-            </div>
-          </div>
+          <div style="font-weight:900; font-size:17px; color:var(--primary); margin-bottom:6px; line-height:1.4;">${codeDisplay}${master.name}</div>
+          <div class="cost-info" style="font-size:13px; color:#475569; font-weight:700;">【${master.cat}】 / 1P原価: <span style="color:#dc2626;">¥${Math.round(unitCost).toLocaleString()}</span></div>
         </td>
         <td>
-          <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
-            <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-size:11px; font-weight:bold; color:#64748b;">計画</span>
-              <input type="number" min="0" value="${item.qty}" oninput="updatePlanItem(${idx}, 'qty', this.value)" style="width:70px; font-size:15px; text-align:right;">
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-size:11px; font-weight:bold; color:#059669;">済</span>
-              <input type="number" min="0" value="${madeVal}" oninput="updatePlanItem(${idx}, 'made', this.value)" style="width:70px; font-size:15px; text-align:right; border: 2px solid #059669; background: #f0fdf4;">
-            </div>
+          <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px;">
+            <input type="number" min="0" value="${item.qty}" oninput="updatePlanItem(${idx}, 'qty', this.value)" style="width:75px; font-size:16px; text-align:right;">
+            <span style="font-size:14px; font-weight:bold; color:#334155;">P</span>
           </div>
         </td>
         <td>
@@ -636,7 +535,6 @@ function renderPlan() {
 
 function recalculate() {
   let totalPacks = 0, totalSales = 0, totalCost = 0;
-  let totalMade = 0;
   
   const matSum = {};
   const reserveMatSum = {}; 
@@ -658,11 +556,9 @@ function recalculate() {
     const rate = sales > 0 ? (margin / sales) * 100 : 0;
 
     totalPacks += item.qty;
-    totalMade += (item.made || 0);
     totalSales += sales;
     totalCost += cost;
 
-    // 原材料計算は「計画数(qty)」ベースで計算する
     for (let mKey in master.recipe) {
       if (matSum[mKey] !== undefined) {
         const addedQty = master.recipe[mKey] * item.qty;
@@ -677,11 +573,6 @@ function recalculate() {
       rows[idx].querySelector('.row-rate').innerHTML = `<span class="rate-badge ${badgeClass}">${rate.toFixed(1)}%</span>`;
     }
   });
-
-  // 進捗バーの更新
-  const progressPercent = totalPacks > 0 ? Math.min(100, Math.round((totalMade / totalPacks) * 100)) : 0;
-  document.getElementById('progressText').innerText = `${Math.round(totalMade)} / ${Math.round(totalPacks)} P (${progressPercent}%)`;
-  document.getElementById('progressBar').style.width = `${progressPercent}%`;
 
   const totalMargin = totalSales - totalCost;
   const avgRate = totalSales > 0 ? (totalMargin / totalSales) * 100 : 0;
@@ -739,6 +630,44 @@ function recalculate() {
       });
     }
   });
+}
+
+// ★新機能：CSVで計画データを出力する機能★
+function exportPlanToCSV() {
+  if (currentPlan.length === 0) {
+    alert("出力する計画データがありません。");
+    return;
+  }
+  
+  const dateVal = document.getElementById('planDate').value;
+  // BOMを付与（Excelで開いた際の文字化け防止）
+  let csvContent = "\uFEFF"; 
+  // CSVのヘッダー行（ラベルプリンターやエクセルで見やすい項目）
+  csvContent += "カテゴリー,商品名,呼出CD,製造数(P),売価,製造金額\n";
+  
+  currentPlan.forEach(item => {
+    const master = allProductsMaster.find(p => p.id === item.pId);
+    if (master) {
+      const cat = `"${master.cat}"`;
+      const name = `"${master.name}"`;
+      const code = `"${master.code || ''}"`;
+      const qty = item.qty;
+      const price = item.price;
+      const sales = item.qty * item.price;
+      
+      csvContent += `${cat},${name},${code},${qty},${price},${sales}\n`;
+    }
+  });
+  
+  // CSVファイルを作成してダウンロード
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `製造計画_${dateVal}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function calculateRangeOrders() {
@@ -939,7 +868,7 @@ function savePlanForDate() {
   localStorage.setItem(STORAGE_PREFIX + dateVal, JSON.stringify(payload));
   renderSavedChips();
   updateDateStatus(true);
-  alert(`【${dateVal}】の製造計画と進捗を保存しました。`);
+  alert(`【${dateVal}】の製造計画を保存しました。`);
 }
 
 function onDateChanged() {
@@ -999,10 +928,7 @@ function copyFromPreviousDay() {
   const raw = localStorage.getItem(STORAGE_PREFIX + prevDateStr);
   if (!raw) { alert(`前日【${prevDateStr}】の保存データがありません。`); return; }
   if (confirm(`前日【${prevDateStr}】の計画をコピーしますか？`)) {
-    // コピー時は進捗(made, done)をリセットする
-    const copiedPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
-    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
-    currentPlan = copiedPlan;
+    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
     updateDateStatus(false);
     renderPlan();
   }
@@ -1014,10 +940,7 @@ function copyFromSelectedDate() {
   const raw = localStorage.getItem(STORAGE_PREFIX + sourceDateStr);
   if (!raw) return;
   if (confirm(`【${sourceDateStr}】の計画をコピーしますか？`)) {
-    // コピー時は進捗をリセット
-    const copiedPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
-    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
-    currentPlan = copiedPlan;
+    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
     updateDateStatus(false);
     renderPlan();
   }
@@ -1031,14 +954,10 @@ function copyCurrentPlanToTargetDate() {
     alert("現在と同じ日付が選択されています。別の日付を指定してください。");
     return;
   }
-  if (confirm(`現在の計画内容を【${targetDateStr}】へコピー保存しますか？`)) {
-    // コピー保存時も進捗をリセット
-    const copiedPlan = JSON.parse(JSON.stringify(currentPlan));
-    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
-    
+  if (confirm(`現在の計画内容を【${targetDateStr}】へ丸ごとコピー保存しますか？`)) {
     const payload = {
       date: targetDateStr,
-      plan: copiedPlan,
+      plan: JSON.parse(JSON.stringify(currentPlan)),
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem(STORAGE_PREFIX + targetDateStr, JSON.stringify(payload));
