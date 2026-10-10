@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>水産寿司 製造計画システム（完全スプレッドシート連動版）</title>
+<title>水産寿司 製造計画システム（現場特化・完全版）</title>
 <style>
   :root {
     --primary: #1e3a8a;
@@ -36,7 +36,6 @@
   .range-inputs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .range-inputs input[type="date"] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; }
   .btn-calc-range { background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; }
-  .btn-calc-range:hover { background: #047857; }
 
   .daily-bar { background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
   .daily-row-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
@@ -48,9 +47,7 @@
   
   .daily-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .btn-save { background: #059669; color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 900; border: none; cursor: pointer; }
-  .btn-save:hover { background: #047857; }
   .btn-copy-prev { background: #4338ca; color: white; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 800; border: none; cursor: pointer; }
-  .btn-copy-prev:hover { background: #3730a3; }
   .btn-copy-to { background: #0284c7; color: white; padding: 8px 14px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; }
   .btn-del-plan { background: #fee2e2; color: #dc2626; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 800; border: 1px solid #fca5a5; cursor: pointer; }
 
@@ -74,12 +71,16 @@
   .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .panel-title { font-size: 15px; font-weight: 700; color: #0f172a; }
 
+  .progress-box { margin-bottom: 12px; background: #f0fdf4; padding: 12px; border-radius: 8px; border: 2px solid #bbf7d0; }
+  .progress-header { display: flex; justify-content: space-between; font-weight: 900; margin-bottom: 8px; color: #166534; font-size: 15px; }
+  .progress-bar-bg { background: #dcfce7; border-radius: 6px; height: 16px; width: 100%; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+  .progress-bar-fill { background: #059669; height: 100%; width: 0%; transition: width 0.4s ease; }
+
   .add-box { display: flex; gap: 8px; margin-bottom: 14px; background: var(--primary-light); padding: 10px; border-radius: 6px; flex-wrap: wrap; align-items: center; }
   .add-box select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 600; background: white; max-width: 250px; }
   #productSelect { flex: 1; min-width: 280px; }
   button { cursor: pointer; border: none; border-radius: 6px; font-weight: 700; }
   .btn-add { background: var(--primary); color: white; padding: 7px 16px; font-size: 13px; }
-  .btn-add:hover { background: #172554; }
   .btn-del { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
   .btn-recipe-view { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
   .btn-tool { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; margin-left: 4px; }
@@ -93,6 +94,10 @@
 
   input[type="number"] { width: 100%; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px; text-align: right; font-size: 13px; font-weight: 700; }
   input[type="number"]:focus { outline: none; border-color: var(--primary); background: #f0fdf4; }
+
+  /* チェックボックス完了時の行スタイル */
+  .row-checked { background-color: #f8fafc; opacity: 0.5; filter: grayscale(80%); transition: 0.3s; }
+  .chk-done { width: 26px; height: 26px; cursor: pointer; accent-color: #059669; }
 
   .rate-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
   .rate-good { background: #dcfce7; color: #166534; }
@@ -108,12 +113,12 @@
   .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; }
   .btn-close { background: #64748b; color: white; padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; }
 
-  /* ★スマホ用：商品リストのカード型レイアウト★ */
+  /* ★2. スマホ用：極限スッキリレイアウト★ */
   @media(max-width: 768px) {
     #planTable, #planTable thead, #planTable tbody, #planTable tr, #planTable th, #planTable td {
       display: block; width: 100%;
     }
-    #planTable thead { display: none; } /* スマホでは上の見出しを隠す */
+    #planTable thead { display: none; } 
     #planTable tr {
       border: 3px solid #bfdbfe;
       border-radius: 12px;
@@ -124,26 +129,80 @@
     }
     #planTable td {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0; border-bottom: 1px dashed #cbd5e1; text-align: right;
+      padding: 10px 0; border-bottom: 1px dashed #cbd5e1; text-align: right;
     }
     #planTable td:last-child { border-bottom: none; padding-bottom: 4px; }
     
     /* 商品名は大きく一番上に配置 */
     #planTable td:nth-child(1) {
-      display: block; text-align: left;
-      border-bottom: 3px solid #94a3b8;
-      padding-bottom: 14px; margin-bottom: 8px;
+      display: flex; flex-direction: row; align-items: center; text-align: left;
+      border-bottom: 3px solid #94a3b8; padding-bottom: 12px; margin-bottom: 8px;
     }
     
-    /* スマホ画面用に左側のラベルを自動追加 */
+    /* 原価表示を完全に隠す（スマホ限定） */
+    .cost-info { display: none !important; }
+
+    /* スマホ画面用に左側のラベルを追加 */
     #planTable td:nth-child(2)::before { content: "📦 製造数(P)"; font-size: 14px; font-weight: 900; color: #334155; }
-    #planTable td:nth-child(3)::before { content: "💰 売価(円)"; font-size: 14px; font-weight: 900; color: #334155; }
-    #planTable td:nth-child(4)::before { content: "💴 製造金額"; font-size: 14px; font-weight: 900; color: #334155; }
-    #planTable td:nth-child(5)::before { content: "📈 値入れ率"; font-size: 14px; font-weight: 900; color: #334155; }
-    #planTable td:nth-child(6)::before { content: "⚙️ 操作"; font-size: 14px; font-weight: 900; color: #334155; }
     
-    /* スマホだと入力欄を押しやすくする */
-    #planTable input[type="number"] { max-width: 120px; font-size: 18px; padding: 10px; }
+    /* 売価・製造金額・値入れ率を「極小・控えめ」にする */
+    #planTable td:nth-child(3) { padding: 4px 0 !important; border-bottom: none !important; }
+    #planTable td:nth-child(3)::before { content: "💰 売価"; font-size: 11px; font-weight: normal; color: #94a3b8; }
+    #planTable td:nth-child(3) input { max-width: 70px; font-size: 12px !important; padding: 4px !important; color: #64748b; }
+    
+    #planTable td:nth-child(4) { padding: 4px 0 !important; border-bottom: none !important; }
+    #planTable td:nth-child(4)::before { content: "💴 金額"; font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .row-sales { font-size: 12px !important; color: #94a3b8 !important; font-weight: normal !important; }
+    
+    #planTable td:nth-child(5) { padding: 4px 0 !important; border-bottom: 1px dashed #cbd5e1 !important; }
+    #planTable td:nth-child(5)::before { content: "📈 値入"; font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .row-rate .rate-badge { font-size: 10px !important; padding: 2px 4px !important; opacity: 0.7; }
+    
+    /* スマホだと操作ボタンを右寄せに */
+    #planTable td:nth-child(6) { justify-content: flex-end; gap: 10px; }
+  }
+
+  /* ★3. A4印刷モード用の特別レイアウト★ */
+  @media print {
+    header, .sync-bar, .top-tools, .copy-bar, .saved-select-bar, .daily-btns, .summary-grid, .add-box, .btn-tool, .btn-del, .btn-recipe-view, .rate-badge, .progress-box {
+      display: none !important;
+    }
+    
+    body { background: white !important; color: black !important; padding: 0 !important; font-size: 13px !important; }
+    .container { max-width: 100% !important; margin: 0 !important; }
+    .panel { border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 30px !important; page-break-inside: avoid; }
+    .panel-title { font-size: 18px !important; font-weight: 900 !important; border-bottom: 2px solid #000 !important; padding-bottom: 4px !important; margin-bottom: 12px !important; }
+
+    table, #planTable { display: table !important; width: 100% !important; border-collapse: collapse !important; }
+    thead, #planTable thead { display: table-header-group !important; }
+    tbody, #planTable tbody { display: table-row-group !important; }
+    tr, #planTable tr { display: table-row !important; margin: 0 !important; border: none !important; box-shadow: none !important; padding: 0 !important; opacity: 1 !important; filter: none !important; background: transparent !important; }
+    th, td, #planTable th, #planTable td { display: table-cell !important; border: 1px solid #000 !important; padding: 8px !important; color: #000 !important; text-align: left !important; }
+    th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #planTable td::before { display: none !important; }
+
+    /* 厨房指示書に不要な列を非表示 */
+    #planTable th:nth-child(3), #planTable td:nth-child(3),
+    #planTable th:nth-child(4), #planTable td:nth-child(4),
+    #planTable th:nth-child(5), #planTable td:nth-child(5),
+    #planTable th:nth-child(6), #planTable td:nth-child(6) {
+      display: none !important;
+    }
+    #materialBody th:nth-child(4), #materialBody td:nth-child(4),
+    #materialBody th:nth-child(5), #materialBody td:nth-child(5) {
+      display: none !important;
+    }
+
+    /* 原価情報とチェックボックスを印刷時は隠す */
+    .cost-info, .chk-done { display: none !important; }
+    
+    input[type="number"], input[type="date"] {
+      border: none !important; background: transparent !important; font-size: 16px !important; font-weight: bold !important; color: black !important; padding: 0 !important; width: auto !important; text-align: left !important;
+    }
+    
+    .daily-inputs { border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; display: block !important; margin-bottom: 10px !important; }
+    .daily-inputs label { font-size: 18px !important; color: black !important; }
+    #dateStatus { display: none !important; }
   }
 </style>
 </head>
@@ -151,7 +210,7 @@
 
 <div class="container">
   <header>
-    <h1>🍣 水産寿司 製造計画システム（完全スプレッドシート連動版）</h1>
+    <h1>🍣 水産寿司 製造計画システム（現場特化・完全版）</h1>
   </header>
 
   <div class="sync-bar">
@@ -193,7 +252,7 @@
         <span id="dateStatus" style="font-size: 18px; color: var(--text-muted); font-weight: 800;"></span>
       </div>
       <div class="daily-btns">
-        <button class="btn-save" onclick="savePlanForDate()">💾 現在の計画を保存</button>
+        <button class="btn-save" onclick="savePlanForDate()">💾 現在の計画を進捗ごと保存</button>
         <button class="btn-copy-prev" onclick="copyFromPreviousDay()">⏪ 前日の計画をコピー</button>
         <button class="btn-del-plan" onclick="deletePlanForDate()">🗑️ この日の計画を削除</button>
       </div>
@@ -220,7 +279,7 @@
 
   <div class="summary-grid">
     <div class="card">
-      <div class="card-title">総製造パック数</div>
+      <div class="card-title">総製造パック数 (計画)</div>
       <div class="card-val" id="sumPacks">0 P</div>
     </div>
     <div class="card">
@@ -246,7 +305,20 @@
       <div class="panel-header">
         <div class="panel-title">1. 本日の製造品目リスト</div>
         <div>
+          <!-- ★A4印刷ボタンを追加★ -->
+          <button class="btn-tool" style="background:#475569; color:white; font-weight:bold; padding:6px 12px;" onclick="window.print()">🖨️ A4指示書を印刷</button>
           <button class="btn-tool" onclick="clearPlan()">全クリア</button>
+        </div>
+      </div>
+
+      <!-- ★製造進捗バー★ -->
+      <div class="progress-box">
+        <div class="progress-header">
+          <span>🎯 製造進捗（チェック済 または 製造完了）</span>
+          <span id="progressText">0 / 0 P (0%)</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBar" class="progress-bar-fill"></div>
         </div>
       </div>
 
@@ -260,12 +332,11 @@
         <button class="btn-add" onclick="addProductFromSelect()">＋ 商品を追加</button>
       </div>
 
-      <!-- ★ここに ID planTable を追加しました！★ -->
       <table id="planTable">
         <thead>
           <tr>
             <th>商品名</th>
-            <th style="width: 80px;">製造数(P)</th>
+            <th style="width: 120px;">製造数(P)</th>
             <th style="width: 85px;">売価(円)</th>
             <th style="text-align: right;">製造金額</th>
             <th style="text-align: right;">値入れ率</th>
@@ -278,7 +349,7 @@
 
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title">2. 本日の必要原材料（材料カテゴリー順）</div>
+        <div class="panel-title">2. 本日の必要原材料（計画数から算出）</div>
       </div>
       <table>
         <thead>
@@ -457,7 +528,8 @@ function addProductFromSelect() {
   const masterItem = allProductsMaster.find(p => p.id === targetId);
   if (!masterItem) return;
 
-  currentPlan.push({ pId: masterItem.id, qty: 1, price: masterItem.price });
+  // 初期値として「made(製造済): 0」「done(チェック): false」を持たせる
+  currentPlan.push({ pId: masterItem.id, qty: 1, price: masterItem.price, made: 0, done: false });
 
   currentPlan.sort((a, b) => {
     const idxA = allProductsMaster.findIndex(p => p.id === a.pId);
@@ -480,7 +552,34 @@ function clearPlan() {
   }
 }
 
-// ★スマホ対応・文字見やすく修正した renderPlan() ★
+// ★チェックボックスを押した時の処理
+function toggleDone(idx, isChecked) {
+  currentPlan[idx].done = isChecked;
+  // チェックを入れた時に「製造済」が0なら、自動で「計画数」と同じ数字を入れる
+  if (isChecked && (!currentPlan[idx].made || currentPlan[idx].made === 0)) {
+    currentPlan[idx].made = currentPlan[idx].qty;
+  }
+  renderPlan(); 
+}
+
+// ★製造数(計画) や 売価 を更新する処理（再描画せず数字だけ更新）
+function updatePlanItem(idx, field, val) {
+  currentPlan[idx][field] = Number(val) || 0;
+  // 計画数と製造済の数が一致したら自動で完了にする判定
+  if (field === 'qty' || field === 'made') {
+    if (currentPlan[idx].made >= currentPlan[idx].qty && currentPlan[idx].qty > 0) {
+      currentPlan[idx].done = true;
+      renderPlan(); // 状態が変わる場合は再描画
+      return;
+    } else if (currentPlan[idx].done && currentPlan[idx].made < currentPlan[idx].qty) {
+      currentPlan[idx].done = false;
+      renderPlan();
+      return;
+    }
+  }
+  recalculate();
+}
+
 function renderPlan() {
   const tbody = document.getElementById('planBody');
   tbody.innerHTML = '';
@@ -491,26 +590,42 @@ function renderPlan() {
     
     const unitCost = calcUnitCost(master.recipe);
     const codeDisplay = master.code ? `<span style="color:#0284c7; font-weight:900;">[${master.code}]</span> ` : '';
+    
+    // チェックボックスの状態
+    const isDone = item.done ? 'checked' : '';
+    const rowClass = item.done ? 'row-checked' : '';
+    const madeVal = item.made || 0;
 
     tbody.innerHTML += `
-      <tr data-idx="${idx}">
+      <tr data-idx="${idx}" class="${rowClass}">
         <td>
-          <div style="font-weight:900; font-size:17px; color:var(--primary); margin-bottom:6px; line-height:1.4;">${codeDisplay}${master.name}</div>
-          <div style="font-size:13px; color:#475569; font-weight:700;">【${master.cat}】 / 1P原価: <span style="color:#dc2626;">¥${Math.round(unitCost).toLocaleString()}</span></div>
-        </td>
-        <td>
-          <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px;">
-            <input type="number" min="0" value="${item.qty}" oninput="updatePlanItem(${idx}, 'qty', this.value)" style="width:75px; font-size:16px; text-align:right;">
-            <span style="font-size:14px; font-weight:bold; color:#334155;">P</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="checkbox" class="chk-done" ${isDone} onchange="toggleDone(${idx}, this.checked)">
+            <div>
+              <div style="font-weight:900; font-size:17px; color:var(--primary); margin-bottom:4px; line-height:1.4;">${codeDisplay}${master.name}</div>
+              <div class="cost-info" style="font-size:13px; color:#475569; font-weight:700;">【${master.cat}】 / 1P原価: <span style="color:#dc2626;">¥${Math.round(unitCost).toLocaleString()}</span></div>
+            </div>
           </div>
         </td>
         <td>
-          <input type="number" min="0" value="${item.price}" oninput="updatePlanItem(${idx}, 'price', this.value)" style="width:90px; font-size:16px; text-align:right;">
+          <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-size:11px; font-weight:bold; color:#64748b;">計画</span>
+              <input type="number" min="0" value="${item.qty}" oninput="updatePlanItem(${idx}, 'qty', this.value)" style="width:70px; font-size:15px; text-align:right;">
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-size:11px; font-weight:bold; color:#059669;">済</span>
+              <input type="number" min="0" value="${madeVal}" oninput="updatePlanItem(${idx}, 'made', this.value)" style="width:70px; font-size:15px; text-align:right; border: 2px solid #059669; background: #f0fdf4;">
+            </div>
+          </div>
+        </td>
+        <td>
+          <input type="number" min="0" value="${item.price}" oninput="updatePlanItem(${idx}, 'price', this.value)" style="width:80px; font-size:14px; text-align:right;">
         </td>
         <td style="text-align:right; font-weight:800; font-size:15px; color:#0f172a;" class="row-sales">¥0</td>
         <td style="text-align:right;" class="row-rate">-</td>
         <td style="text-align:right; white-space:nowrap;">
-          <button class="btn-recipe-view" style="padding:8px 12px; font-size:13px; margin-right:6px;" onclick="showRecipeModal('${master.id}')">📖 レシピ</button>
+          <button class="btn-recipe-view" style="padding:8px 12px; font-size:13px; margin-bottom:4px;" onclick="showRecipeModal('${master.id}')">📖 レシピ</button>
           <button class="btn-del" style="padding:8px 12px; font-size:13px;" onclick="removePlanRow(${idx})">✕ 削除</button>
         </td>
       </tr>
@@ -519,13 +634,10 @@ function renderPlan() {
   recalculate();
 }
 
-function updatePlanItem(idx, field, val) {
-  currentPlan[idx][field] = Number(val) || 0;
-  recalculate();
-}
-
 function recalculate() {
   let totalPacks = 0, totalSales = 0, totalCost = 0;
+  let totalMade = 0;
+  
   const matSum = {};
   const reserveMatSum = {}; 
   for (let key in materials) {
@@ -546,9 +658,11 @@ function recalculate() {
     const rate = sales > 0 ? (margin / sales) * 100 : 0;
 
     totalPacks += item.qty;
+    totalMade += (item.made || 0);
     totalSales += sales;
     totalCost += cost;
 
+    // 原材料計算は「計画数(qty)」ベースで計算する
     for (let mKey in master.recipe) {
       if (matSum[mKey] !== undefined) {
         const addedQty = master.recipe[mKey] * item.qty;
@@ -563,6 +677,11 @@ function recalculate() {
       rows[idx].querySelector('.row-rate').innerHTML = `<span class="rate-badge ${badgeClass}">${rate.toFixed(1)}%</span>`;
     }
   });
+
+  // 進捗バーの更新
+  const progressPercent = totalPacks > 0 ? Math.min(100, Math.round((totalMade / totalPacks) * 100)) : 0;
+  document.getElementById('progressText').innerText = `${Math.round(totalMade)} / ${Math.round(totalPacks)} P (${progressPercent}%)`;
+  document.getElementById('progressBar').style.width = `${progressPercent}%`;
 
   const totalMargin = totalSales - totalCost;
   const avgRate = totalSales > 0 ? (totalMargin / totalSales) * 100 : 0;
@@ -659,7 +778,7 @@ function calculateRangeOrders() {
   }
 
   if (matchedDays === 0) {
-    alert(`指定された期間（${start} 〜 ${end}）に保存された製造計画データがありません。`);
+    alert(`指定された期間（${start} 〜 ${end}）に保存されたデータがありません。`);
     return;
   }
 
@@ -820,7 +939,7 @@ function savePlanForDate() {
   localStorage.setItem(STORAGE_PREFIX + dateVal, JSON.stringify(payload));
   renderSavedChips();
   updateDateStatus(true);
-  alert(`【${dateVal}】の製造計画を保存しました。`);
+  alert(`【${dateVal}】の製造計画と進捗を保存しました。`);
 }
 
 function onDateChanged() {
@@ -880,7 +999,10 @@ function copyFromPreviousDay() {
   const raw = localStorage.getItem(STORAGE_PREFIX + prevDateStr);
   if (!raw) { alert(`前日【${prevDateStr}】の保存データがありません。`); return; }
   if (confirm(`前日【${prevDateStr}】の計画をコピーしますか？`)) {
-    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    // コピー時は進捗(made, done)をリセットする
+    const copiedPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
+    currentPlan = copiedPlan;
     updateDateStatus(false);
     renderPlan();
   }
@@ -892,7 +1014,10 @@ function copyFromSelectedDate() {
   const raw = localStorage.getItem(STORAGE_PREFIX + sourceDateStr);
   if (!raw) return;
   if (confirm(`【${sourceDateStr}】の計画をコピーしますか？`)) {
-    currentPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    // コピー時は進捗をリセット
+    const copiedPlan = JSON.parse(JSON.stringify(JSON.parse(raw).plan || []));
+    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
+    currentPlan = copiedPlan;
     updateDateStatus(false);
     renderPlan();
   }
@@ -906,10 +1031,14 @@ function copyCurrentPlanToTargetDate() {
     alert("現在と同じ日付が選択されています。別の日付を指定してください。");
     return;
   }
-  if (confirm(`現在の計画内容を【${targetDateStr}】として直接コピー保存しますか？`)) {
+  if (confirm(`現在の計画内容を【${targetDateStr}】へコピー保存しますか？`)) {
+    // コピー保存時も進捗をリセット
+    const copiedPlan = JSON.parse(JSON.stringify(currentPlan));
+    copiedPlan.forEach(item => { item.made = 0; item.done = false; });
+    
     const payload = {
       date: targetDateStr,
-      plan: JSON.parse(JSON.stringify(currentPlan)),
+      plan: copiedPlan,
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem(STORAGE_PREFIX + targetDateStr, JSON.stringify(payload));
@@ -975,8 +1104,7 @@ window.onload = function() {
   after3Days.setDate(after3Days.getDate() + 3);
   document.getElementById('rangeEnd').value = `${after3Days.getFullYear()}-${String(after3Days.getMonth() + 1).padStart(2, '0')}-${String(after3Days.getDate()).padStart(2, '0')}`;
 
-  // ★他の人に送る場合は、ここの "" の間に API URL をあらかじめ貼り付けておくと自動で繋がります★
-  const savedApiUrl = localStorage.getItem(API_URL_KEY) || "https://script.google.com/macros/s/AKfycbx719IhvKEQG4GRmYlDDDBHzQsAMpfkOTQjsO4-WsecgyLEm07jE6vD4fMoJgSNlE5R/exec";
+  const savedApiUrl = localStorage.getItem(API_URL_KEY) || "";
   document.getElementById('apiUrlInput').value = savedApiUrl;
 
   initCategoryDropdown();
